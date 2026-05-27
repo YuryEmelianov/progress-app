@@ -151,6 +151,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Inter',sans-ser
        SCREEN 1 — ГЛАВНАЯ
   ════════════════════════════════════════════════ -->
   <div id="screen-main" class="screen active">
+    <div style="padding:0 4px 10px;font-size:13px;color:#bbb;letter-spacing:0.12em;text-transform:lowercase">sleeper</div>
     <div class="main-wrap">
       <!-- Иллюстрация (положи figure.jpg рядом с index.html) -->
       <div class="main-figure">
@@ -164,10 +165,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Inter',sans-ser
       </div>
     </div>
     <div class="main-sub" id="main-updated"></div>
-    <button class="export-btn" onclick="exportData()">
-      <i class="ti ti-download" aria-hidden="true"></i>
-      Экспорт данных
-    </button>
   </div>
 
   <!-- ═══════════════════════════════════════════
@@ -245,6 +242,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Inter',sans-ser
       <button class="ptab" onclick="setPeriod(this,'all')">Всё время</button>
     </div>
     <div class="chart-grid" id="chart-grid" style="padding:0 18px 18px;overflow-y:auto"></div>
+    <button class="export-btn" onclick="exportData()" style="margin:0 18px 16px"><i class="ti ti-download" aria-hidden="true"></i>Экспорт данных</button>
   </div>
 
   <!-- ═══════════════════════════════════════════
