@@ -39,7 +39,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Inter',sans-ser
 .main-figure img{width:100%;height:100%;object-fit:contain;object-position:center}
 .main-figure-fallback{position:absolute;inset:0;display:none;align-items:center;justify-content:center}
 /* Dots overlay — normal flow, sits on top of absolute figure via z-index */
-.main-overlay{position:relative;z-index:2;display:flex;justify-content:space-between;align-items:flex-start;padding:70px 6px 0;flex-shrink:0}
+.main-overlay{position:relative;z-index:2;display:flex;justify-content:space-between;align-items:flex-start;padding:120px 6px 0;flex-shrink:0}
 .skills-col{display:flex;flex-direction:column;gap:18px}
 .sk{display:flex;flex-direction:column;gap:4px}
 .sk label{font-size:10px;color:#ccc;text-shadow:0 0 8px #000,0 1px 3px #000;letter-spacing:.02em}
@@ -154,7 +154,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Inter',sans-ser
   ════════════════════════════════════════════════ -->
   <div id="screen-main" class="screen active">
     <div class="main-wrap" style="position:relative">
-      <div style="padding:32px 4px 10px;font-size:26px;color:#bbb;letter-spacing:0.12em;text-transform:lowercase;text-align:center">sleeper</div>
+      <div style="padding:16px 4px 8px;font-size:26px;letter-spacing:0.12em;text-transform:lowercase;text-align:center;flex-shrink:0">
+        <span style="color:#bbb">sl</span><span style="color:#7c3aed">e</span><span style="color:#f8fd45">e</span><span style="color:#bbb">per</span>
+      </div>
       <!-- Иллюстрация (положи figure.jpg рядом с index.html) -->
       <div class="main-figure">
         <img src="./figure.jpg" alt="" onerror="this.style.display='none'" style="width:72%;height:72%;object-fit:contain;object-position:center bottom">
