@@ -151,7 +151,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Inter',sans-ser
        SCREEN 1 — ГЛАВНАЯ
   ════════════════════════════════════════════════ -->
   <div id="screen-main" class="screen active">
-    <div class="main-wrap">
+    <div class="main-wrap" style="position:relative">
       <div style="padding:32px 4px 10px;font-size:26px;color:#bbb;letter-spacing:0.12em;text-transform:lowercase;text-align:center">sleeper</div>
       <!-- Иллюстрация (положи figure.jpg рядом с index.html) -->
       <div class="main-figure">
@@ -163,11 +163,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Inter',sans-ser
         <div style="flex:0 0 90px"></div>
         <div class="skills-col" id="dots-right"></div>
       </div>
+      <div style="position:absolute;bottom:10px;left:0;right:0;text-align:center;font-size:11px;color:rgba(255,255,255,0.15);letter-spacing:0.08em;z-index:2">v. 1.0</div>
     </div>
-    <div style="display:flex;flex-direction:column;align-items:center;gap:4px;padding-bottom:10px">
-      <div class="main-sub" id="main-updated"></div>
-      <div style="font-size:11px;color:#252525;letter-spacing:0.08em">v. 1.0</div>
-    </div>
+    <div class="main-sub" id="main-updated"></div>
   </div>
 
   <!-- ═══════════════════════════════════════════
