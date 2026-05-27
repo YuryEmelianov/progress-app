@@ -1,0 +1,1024 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<link rel="apple-touch-icon" href="./sleeper-icon.jpg">  
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="theme-color" content="#111111">
+<title>Прогресс</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.4.0/dist/tabler-icons.min.css">
+<style>
+/* ── Reset & Base ─────────────────────────────────── */
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+html,body{height:100%;background:#111;overflow:hidden}
+body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Inter',sans-serif;color:#e8e8e8;user-select:none}
+
+/* ── App Shell ────────────────────────────────────── */
+#app{display:flex;flex-direction:column;height:100%;max-width:430px;margin:0 auto;background:#111;position:relative}
+
+/* ── Screens ──────────────────────────────────────── */
+.screen{display:none;flex:1;flex-direction:column;overflow:hidden}
+.screen.active{display:flex}
+
+/* ── Bottom Nav ───────────────────────────────────── */
+#nav{display:flex;border-top:0.5px solid #1e1e1e;background:#0a0a0a;padding:8px 0 max(12px,env(safe-area-inset-bottom));flex-shrink:0}
+.nb{flex:1;padding:20px 4px;border:none;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.nb i{font-size:23px;color:#333;transition:color .15s}
+.nb.n1.active i{color:#e8e8e8}
+.nb.n2.active i{color:#34d399}
+.nb.n3.active i{color:#60a5fa}
+.nb.n4.active i{color:#f59e0b}
+.nb.n5.active i{color:#f472b6}
+
+/* ── SCREEN 1: Main Dashboard ─────────────────────── */
+#screen-main{padding:16px 16px 8px}
+.main-wrap{flex:1;position:relative;overflow:hidden;border-radius:12px;background:#0a0a0a;display:flex;flex-direction:column}
+.main-figure{position:absolute;inset:0;display:flex;align-items:center;justify-content:center}
+.main-figure img{width:100%;height:100%;object-fit:contain;object-position:center}
+.main-figure-fallback{position:absolute;inset:0;display:none;align-items:center;justify-content:center}
+/* Dots overlay — normal flow, sits on top of absolute figure via z-index */
+.main-overlay{position:relative;z-index:2;display:flex;justify-content:space-between;align-items:flex-start;padding:78px 6px 0;flex-shrink:0}
+.skills-col{display:flex;flex-direction:column;gap:18px}
+.sk{display:flex;flex-direction:column;gap:4px}
+.sk label{font-size:10px;color:#ccc;text-shadow:0 0 8px #000,0 1px 3px #000;letter-spacing:.02em}
+.sk-r{align-items:flex-end}
+.sk-r label{text-align:right}
+.dots{display:flex;gap:2px}
+.dot{width:9px;height:9px;border-radius:2px;background:rgba(255,255,255,.07);border:.5px solid #2e2e2e}
+.dot.on{background:rgba(255,255,255,.82);border:none}
+.main-sub{text-align:center;font-size:10px;color:#252525;padding:6px 0 2px;flex-shrink:0}
+
+/* ── SCREEN 2: Log / New Entry ────────────────────── */
+#screen-log{padding:20px 18px 10px;gap:14px;overflow-y:auto}
+.fl-label{font-size:11px;color:#555;margin-bottom:6px;display:block}
+.tag-wrap{display:flex;flex-wrap:wrap;gap:6px}
+.tag{padding:8px 13px;border-radius:8px;font-size:12px;cursor:pointer;border:.5px solid #2a2a2a;background:#1a1a1a;color:#555;transition:all .15s}
+.tag.sel-te{background:#134e4a;color:#5eead4;border-color:transparent}
+.tag.sel-gr{background:#14532d;color:#86efac;border-color:transparent}
+.tag.sel-bl{background:#1e3a5f;color:#93c5fd;border-color:transparent}
+.tag.sel-pu{background:#3b0764;color:#c4b5fd;border-color:transparent}
+.tag.sel-am{background:#451a03;color:#fcd34d;border-color:transparent}
+.tag.sel-pk{background:#4a044e;color:#f0abfc;border-color:transparent}
+.ev-textarea{width:100%;padding:10px 12px;background:#1a1a1a;border:.5px solid #2a2a2a;border-radius:8px;color:#e8e8e8;font-size:14px;outline:none;resize:none;line-height:1.5;min-height:120px;font-family:inherit}
+.ev-textarea:focus{border-color:#444}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.sl-wrap{display:flex;flex-direction:column;gap:6px}
+.sl-row{display:flex;align-items:center;gap:8px}
+.sl-row input[type=range]{flex:1;accent-color:#7c3aed}
+.sl-val{font-size:14px;font-weight:500;color:#e8e8e8;min-width:16px;text-align:right}
+.anx-section{display:none;flex-direction:column;gap:14px}
+.save-btn{width:100%;padding:13px;border-radius:10px;border:none;background:#3b0764;color:#c4b5fd;font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:4px;transition:background .2s,opacity .2s}
+.save-btn:active{opacity:.8}
+.save-btn.disabled{background:#1e1e1e;color:#333;cursor:default}
+
+/* ── SCREEN 3: Динамика ───────────────────────────── */
+#screen-dyn{padding:20px 18px 10px}
+.period-tabs{display:flex;gap:6px;margin-bottom:16px;flex-shrink:0}
+.ptab{padding:7px 16px;border-radius:20px;font-size:11px;border:.5px solid #2a2a2a;background:transparent;color:#555;cursor:pointer}
+.ptab.active{background:#1e3a5f;color:#93c5fd;border-color:transparent}
+/* 2×3 chart grid */
+.chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;flex:1}
+.chart-cell{background:#1a1a1a;border:.5px solid #222;border-radius:10px;padding:10px 8px 6px;display:flex;flex-direction:column;gap:4px}
+.chart-cell-lbl{font-size:10px;color:#555}
+.chart-area{display:flex;gap:4px;align-items:flex-start}
+.y-axis{display:flex;flex-direction:column;justify-content:space-between;width:14px;flex-shrink:0}
+.y-tick{font-size:8px;color:#2a2a2a;text-align:right;line-height:1}
+.chart-svg-wrap{flex:1}
+.chart-svg-wrap svg{display:block;width:100%;height:56px}
+
+/* ── SCREEN 4: База знаний ────────────────────────── */
+#screen-bk{padding:20px 18px 10px;overflow-y:auto}
+.bk-list{display:flex;flex-direction:column;gap:8px}
+.bk-card{background:#1a1a1a;border:.5px solid #222;border-radius:10px;overflow:hidden;cursor:pointer}
+.bk-head{padding:12px 14px;display:flex;justify-content:space-between;align-items:flex-start}
+.bk-left{display:flex;flex-direction:column;gap:2px;flex:1}
+.bk-badge{display:inline-block;font-size:10px;padding:2px 8px;border-radius:4px;margin-bottom:4px}
+.bk-title{font-size:13px;color:#e8e8e8;font-weight:500}
+.bk-short{font-size:11px;color:#555;margin-top:2px;line-height:1.4}
+.bk-arr{font-size:16px;color:#333;transition:transform .2s;margin-left:8px;flex-shrink:0}
+.bk-body{display:none;padding:0 14px 12px;font-size:12px;color:#666;line-height:1.6;border-top:.5px solid #1e1e1e}
+.bk-card.open .bk-body{display:block}
+.bk-card.open .bk-arr{transform:rotate(180deg)}
+
+/* ── SCREEN 5: Заметки / События / Знания ─────────── */
+#screen-notes{padding:16px 18px 10px;flex-direction:column}
+.mode-toggle{display:flex;background:#1a1a1a;border-radius:8px;padding:3px;margin-bottom:14px;border:.5px solid #222;flex-shrink:0}
+.mtab{flex:1;padding:7px;border:none;background:transparent;color:#555;font-size:12px;border-radius:6px;cursor:pointer}
+.mtab.active{background:#111;color:#e8e8e8}
+.tab-pane{display:none;flex-direction:column;flex:1;overflow:hidden}
+.tab-pane.active{display:flex}
+
+/* Notes mode */
+.feed{display:flex;flex-direction:column;gap:8px;flex:1;overflow-y:auto}
+.feed-empty{font-size:12px;color:#333;text-align:center;padding-top:40px}
+.note-card{background:#1a1a1a;border:.5px solid #222;border-radius:10px;padding:12px 14px;flex-shrink:0}
+.note-card-date{font-size:10px;color:#444;margin-bottom:6px}
+.note-card-text{font-size:13px;color:#888;line-height:1.6;user-select:text}
+.ev-card{background:#1a1a1a;border:.5px solid #222;border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:5px;flex-shrink:0}
+.ev-card-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.ev-card-date{font-size:10px;color:#444;flex-shrink:0}
+.ev-card-tags{display:flex;flex-wrap:wrap;gap:3px}
+.ev-card-tag{font-size:10px;color:#555;background:#222;border-radius:4px;padding:2px 6px}
+.ev-card-text{font-size:12px;color:#888;line-height:1.5;user-select:text}
+.ev-card-scores{display:flex;gap:10px;font-size:10px;color:#444}
+
+/* Add panel (notes) */
+.add-panel{display:none;flex-direction:column;gap:8px;flex-shrink:0;margin-top:8px}
+.add-panel.open{display:flex}
+.note-input{width:100%;padding:10px 12px;background:#1a1a1a;border:.5px solid #2a2a2a;border-radius:8px;color:#e8e8e8;font-size:14px;outline:none;resize:none;line-height:1.6;min-height:90px;font-family:inherit}
+.note-input:focus{border-color:#444}
+.note-save{width:100%;padding:11px;border-radius:8px;border:.5px solid #333;background:transparent;color:#888;font-size:13px;cursor:pointer}
+.plus-btn{width:100%;padding:11px;border-radius:10px;border:.5px solid #2a2a2a;background:transparent;color:#555;font-size:20px;cursor:pointer;flex-shrink:0;margin-top:8px}
+
+/* Knowledge add form */
+.zn-form{display:flex;flex-direction:column;gap:12px;overflow-y:auto;flex:1}
+.zn-input{width:100%;padding:10px 12px;background:#1a1a1a;border:.5px solid #2a2a2a;border-radius:8px;color:#e8e8e8;font-size:14px;outline:none;font-family:inherit}
+.zn-input:focus{border-color:#444}
+.zn-select{width:100%;padding:10px 12px;background:#1a1a1a;border:.5px solid #2a2a2a;border-radius:8px;color:#e8e8e8;font-size:14px;outline:none}
+.zn-textarea{width:100%;padding:10px 12px;background:#1a1a1a;border:.5px solid #2a2a2a;border-radius:8px;color:#e8e8e8;font-size:14px;outline:none;resize:none;min-height:90px;font-family:inherit;line-height:1.5}
+.zn-textarea:focus{border-color:#444}
+.zn-add-btn{width:100%;padding:13px;border-radius:10px;border:none;background:#1e3a5f;color:#93c5fd;font-size:20px;cursor:pointer;flex-shrink:0}
+
+/* Export button */
+.export-btn{margin:0 18px 12px;padding:10px;border-radius:8px;border:.5px solid #2a2a2a;background:transparent;color:#444;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px}
+.export-btn i{font-size:16px}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ═══════════════════════════════════════════
+       SCREEN 1 — ГЛАВНАЯ
+  ════════════════════════════════════════════════ -->
+  <div id="screen-main" class="screen active">
+    <div class="main-wrap" style="position:relative">
+      <div style="padding:64px 4px 8px;font-size:26px;letter-spacing:0.12em;text-transform:lowercase;text-align:center;flex-shrink:0">
+        <span style="color:#bbb">sl</span><span style="color:#7c3aed">e</span><span style="color:#f8fd45">e</span><span style="color:#bbb">per</span>
+      </div>
+      <!-- Иллюстрация (положи figure.jpg рядом с index.html) -->
+      <div class="main-figure">
+        <img src="./figure.jpg" alt="" onerror="this.style.display='none'" style="width:72%;height:72%;object-fit:contain;object-position:center center">
+      </div>
+      <!-- Квадратики — поверх иллюстрации, золотое сечение -->
+      <div class="main-overlay">
+        <div class="skills-col" id="dots-left"></div>
+        <div style="flex:0 0 90px"></div>
+        <div class="skills-col" id="dots-right"></div>
+      </div>
+      <div style="position:absolute;bottom:64px;left:0;right:0;text-align:center;font-size:11px;color:rgba(255,255,255,0.15);letter-spacing:0.08em;z-index:2">version 1.0</div>
+    </div>
+    <div class="main-sub" id="main-updated"></div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       SCREEN 2 — ЗАПИСЬ СОБЫТИЯ
+  ════════════════════════════════════════════════ -->
+  <div id="screen-log" class="screen">
+    <!-- Теги -->
+    <div>
+      <span class="fl-label">Тег</span>
+      <div class="tag-wrap" id="tag-container">
+        <span class="tag" data-tag="НСОВ" data-color="te" data-hide-anx="1">НСОВ</span>
+        <span class="tag" data-tag="МНО"  data-color="gr" data-hide-anx="0">МНО</span>
+        <span class="tag" data-tag="З&amp;С"  data-color="bl" data-hide-anx="1">З&amp;С</span>
+        <span class="tag" data-tag="РВС"  data-color="pu" data-hide-anx="0">РВС</span>
+        <span class="tag" data-tag="ПГ"   data-color="am" data-hide-anx="0">ПГ</span>
+        <span class="tag" data-tag="Core" data-color="am" data-hide-anx="0">Core</span>
+        <span class="tag" data-tag="Другое"   data-color="pk" data-hide-anx="0">Другое</span>
+      </div>
+    </div>
+    <!-- Описание события -->
+    <div>
+      <span class="fl-label">Событие</span>
+      <textarea class="ev-textarea" id="ev-text"></textarea>
+    </div>
+    <!-- Вес и оценка -->
+    <div class="row2">
+      <div class="sl-wrap">
+        <span class="fl-label">Вес</span>
+        <div class="sl-row">
+          <input type="range" min="1" max="10" value="1" id="sl-weight" oninput="document.getElementById('val-weight').textContent=this.value">
+          <span class="sl-val" id="val-weight">1</span>
+        </div>
+      </div>
+      <div class="sl-wrap">
+        <span class="fl-label">Оценка</span>
+        <div class="sl-row">
+          <input type="range" min="1" max="10" value="1" id="sl-score" oninput="document.getElementById('val-score').textContent=this.value">
+          <span class="sl-val" id="val-score">1</span>
+        </div>
+      </div>
+    </div>
+    <!-- Тревога (показывается только для нужных тегов) -->
+    <div class="anx-section" id="anx-section">
+      <div class="row2">
+        <div class="sl-wrap">
+          <span class="fl-label">Тревога до</span>
+          <div class="sl-row">
+            <input type="range" min="1" max="10" value="1" id="sl-anx1" oninput="document.getElementById('val-anx1').textContent=this.value">
+            <span class="sl-val" id="val-anx1">1</span>
+          </div>
+        </div>
+        <div class="sl-wrap">
+          <span class="fl-label">Тревога после</span>
+          <div class="sl-row">
+            <input type="range" min="1" max="10" value="1" id="sl-anx2" oninput="document.getElementById('val-anx2').textContent=this.value">
+            <span class="sl-val" id="val-anx2">1</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Сохранить -->
+    <button class="save-btn" onclick="saveEvent()">
+      <i class="ti ti-device-floppy" aria-hidden="true"></i>
+    </button>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       SCREEN 3 — ДИНАМИКА
+  ════════════════════════════════════════════════ -->
+  <div id="screen-dyn" class="screen">
+    <div class="period-tabs" style="flex-shrink:0;padding:0 18px;padding-top:20px">
+      <button class="ptab active" onclick="setPeriod(this,'week')">Неделя</button>
+      <button class="ptab" onclick="setPeriod(this,'month')">Месяц</button>
+      <button class="ptab" onclick="setPeriod(this,'all')">Всё время</button>
+    </div>
+    <div class="chart-grid" id="chart-grid" style="padding:0 18px 18px;overflow-y:auto"></div>
+    <button class="export-btn" onclick="exportData()" style="margin:0 18px 16px"><i class="ti ti-download" aria-hidden="true"></i>Экспорт данных</button>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       SCREEN 4 — БАЗА ЗНАНИЙ
+  ════════════════════════════════════════════════ -->
+  <div id="screen-bk" class="screen">
+    <div class="bk-list" id="bk-list" style="padding:20px 18px"></div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       SCREEN 5 — ЗАМЕТКИ / СОБЫТИЯ / ЗНАНИЯ
+  ════════════════════════════════════════════════ -->
+  <div id="screen-notes" class="screen">
+    <div class="mode-toggle">
+      <button class="mtab active" id="mt-notes" onclick="switchNotesMode('notes')">Заметки</button>
+      <button class="mtab" id="mt-events" onclick="switchNotesMode('events')">События</button>
+      <button class="mtab" id="mt-zn" onclick="switchNotesMode('zn')">Знания</button>
+    </div>
+
+    <!-- Лента заметок -->
+    <div class="tab-pane active" id="pane-notes">
+      <div class="feed" id="notes-feed">
+        <div class="feed-empty">Нет заметок</div>
+      </div>
+      <div class="add-panel" id="note-add-panel">
+        <textarea class="note-input" id="note-input"></textarea>
+        <button class="note-save" onclick="saveNote()">Сохранить</button>
+      </div>
+      <button class="plus-btn" onclick="toggleAddNote()">+</button>
+    </div>
+
+    <!-- Лента событий -->
+    <div class="tab-pane" id="pane-events">
+      <div class="feed" id="events-feed">
+        <div class="feed-empty">Нет сохранённых событий</div>
+      </div>
+    </div>
+
+    <!-- Добавить в базу знаний -->
+    <div class="tab-pane" id="pane-zn">
+      <div class="zn-form">
+        <div>
+          <span class="fl-label">Категория</span>
+          <select class="zn-select" id="zn-cat">
+            <option value="инструмент">инструмент</option>
+            <option value="метод">метод</option>
+            <option value="концепция">концепция</option>
+            <option value="другое">другое</option>
+          </select>
+        </div>
+        <div>
+          <span class="fl-label">Название</span>
+          <input class="zn-input" id="zn-title" type="text">
+        </div>
+        <div>
+          <span class="fl-label">Краткое определение</span>
+          <input class="zn-input" id="zn-short" type="text">
+        </div>
+        <div>
+          <span class="fl-label">Подробный текст</span>
+          <textarea class="zn-textarea" id="zn-detail"></textarea>
+        </div>
+        <button class="zn-add-btn" onclick="addKnowledge()">+</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ Нижняя навигация ═══ -->
+  <nav id="nav">
+    <button class="nb n1 active" onclick="showScreen('main',this)" aria-label="Главная"><i class="ti ti-user" aria-hidden="true"></i></button>
+    <button class="nb n2" onclick="showScreen('log',this)" aria-label="Записи"><i class="ti ti-pencil" aria-hidden="true"></i></button>
+    <button class="nb n3" onclick="showScreen('dyn',this)" aria-label="Динамика"><i class="ti ti-chart-line" aria-hidden="true"></i></button>
+    <button class="nb n4" onclick="showScreen('bk',this)" aria-label="База знаний"><i class="ti ti-books" aria-hidden="true"></i></button>
+    <button class="nb n5" onclick="showScreen('notes',this)" aria-label="Заметки"><i class="ti ti-notes" aria-hidden="true"></i></button>
+  </nav>
+</div>
+
+<script>
+// ════════════════════════════════════════════════════════
+// КОНСТАНТЫ
+// ════════════════════════════════════════════════════════
+
+// Все направления (порядок важен: 3 слева, 3 справа)
+const TAGS_LEFT  = ['НСОВ', 'МНО', 'З&С'];
+const TAGS_RIGHT = ['РВС', 'ПГ', 'Core'];
+const ALL_DIRS   = [...TAGS_LEFT, ...TAGS_RIGHT];
+
+// Цвета для графиков
+const DIR_COLORS = {
+  'НСОВ': '#0f766e',
+  'МНО':  '#16a34a',
+  'З&С':  '#1d4ed8',
+  'РВС':  '#7c3aed',
+  'ПГ':   '#b45309',
+  'Core': '#d97706'
+};
+
+// Нелинейные пороги для квадратиков (индекс = количество заполненных)
+// Значение направления 0–10 → кол-во закрашенных квадратиков
+const DOT_THRESHOLDS = [0, 2.0, 3.0, 4.0, 4.8, 5.5, 6.1, 6.7, 7.3, 8.0, 9.0];
+
+// Постоянная затухания (дни). Запись месячной давности весит ~37%
+const DECAY_DAYS = 30;
+
+// Стили категорий для базы знаний
+const CAT_STYLE = {
+  'инструмент': { bg:'#3b0764', color:'#c4b5fd' },
+  'метод':      { bg:'#134e4a', color:'#5eead4' },
+  'концепция':  { bg:'#14532d', color:'#86efac' },
+  'другое':     { bg:'#1e3a5f', color:'#93c5fd' }
+};
+
+// ════════════════════════════════════════════════════════
+// ХРАНИЛИЩЕ (localStorage)
+// ════════════════════════════════════════════════════════
+
+const Storage = {
+  _get(key, def) {
+    try { return JSON.parse(localStorage.getItem(key)) ?? def; }
+    catch { return def; }
+  },
+  _set(key, val) {
+    try { localStorage.setItem(key, JSON.stringify(val)); } catch(e) {}
+  },
+  getEvents()          { return this._get('tracker_events', []); },
+  saveEvents(v)        { this._set('tracker_events', v); },
+  getNotes()           { return this._get('tracker_notes', []); },
+  saveNotes(v)         { this._set('tracker_notes', v); },
+  getUserKnowledge()   { return this._get('tracker_knowledge', []); },
+  saveUserKnowledge(v) { this._set('tracker_knowledge', v); },
+};
+
+// ════════════════════════════════════════════════════════
+// ФОРМУЛЫ ПРОГРЕССА
+// ════════════════════════════════════════════════════════
+
+const Progress = {
+  // Вклад одной записи: оценка × (вес / 5) + бонус за снижение тревоги
+  // weight=5 — нейтраль (вклад = score), <5 — незначимая ситуация, >5 — высококонтекстная
+  contribution(ev) {
+    const base  = ev.score * (ev.weight / 5);
+    const bonus = ev.hasAnx
+      ? Math.max(0, ev.anx1 - ev.anx2) * (ev.weight / 5) * 0.5
+      : 0;
+    return Math.min(10, base + bonus);
+  },
+
+  // Длина стрика по направлению (кол-во последовательных дней с записями)
+  streak(events, dir) {
+    const tagEvents = events.filter(e => e.tags.includes(dir));
+    if (!tagEvents.length) return 0;
+
+    const today     = new Date().toISOString().slice(0,10);
+    const yesterday = new Date(Date.now()-86400000).toISOString().slice(0,10);
+
+    // Уникальные даты по убыванию
+    const dates = [...new Set(tagEvents.map(e => e.date.slice(0,10)))].sort().reverse();
+
+    // Стрик должен включать сегодня или вчера
+    if (dates[0] !== today && dates[0] !== yesterday) return 0;
+
+    let streak = 1;
+    for (let i = 1; i < dates.length; i++) {
+      const diff = (new Date(dates[i-1]) - new Date(dates[i])) / 86400000;
+      if (diff === 1) streak++;
+      else break;
+    }
+    return streak;
+  },
+
+  // Мультипликатор стрика: макс. +30% при 7+ днях подряд
+  streakMult(streak) {
+    return 1 + Math.min(Math.max(0, streak - 1), 6) * 0.05;
+  },
+
+  // Итоговое значение направления 0–10
+  forDir(events, dir) {
+    const ANCHOR_VALUE  = 5;    // нейтральная точка
+    const ANCHOR_WEIGHT = 3.87; // ≈ 4 виртуальных нейтральных дня (сумма затуханий)
+
+    const now    = Date.now();
+    const mult   = this.streakMult(this.streak(events, dir));
+    const dirEvs = events.filter(e => e.tags.includes(dir));
+
+    let wSum = ANCHOR_VALUE * ANCHOR_WEIGHT;
+    let wTot = ANCHOR_WEIGHT;
+
+    dirEvs.forEach(ev => {
+      const daysAgo = (now - new Date(ev.date).getTime()) / 86400000;
+      const decay   = Math.exp(-daysAgo / DECAY_DAYS);
+      const contrib = Math.min(10, this.contribution(ev) * mult);
+      wSum += contrib * decay;
+      wTot += decay;
+    });
+
+    return Math.max(0, Math.min(10, wSum / wTot));
+  },
+
+  // Значение → кол-во заполненных квадратиков (0–10)
+  toDots(val) {
+    let filled = 0;
+    for (let i = 1; i <= 10; i++) {
+      if (val >= DOT_THRESHOLDS[i]) filled = i;
+      else break;
+    }
+    return filled;
+  },
+
+  // Данные для графика одного направления по периоду
+  chartData(events, dir, period) {
+    const now    = new Date();
+    const labels = [];
+    const values = [];
+
+    const dayStr = d => d.toISOString().slice(0,10);
+
+    if (period === 'week') {
+      for (let i = 6; i >= 0; i--) {
+        const d = new Date(now); d.setDate(d.getDate() - i);
+        const ds = dayStr(d);
+        labels.push(d.toLocaleDateString('ru-RU',{weekday:'short'}));
+        const evs = events.filter(e => e.tags.includes(dir) && e.date.slice(0,10) === ds);
+        if (!evs.length) { values.push(null); continue; }
+        const avg = evs.reduce((s,e) => s + this.contribution(e), 0) / evs.length;
+        values.push(Math.min(10, avg));
+      }
+    } else if (period === 'month') {
+      for (let i = 3; i >= 0; i--) {
+        const wEnd   = new Date(now); wEnd.setDate(wEnd.getDate() - i*7);
+        const wStart = new Date(wEnd); wStart.setDate(wStart.getDate() - 7);
+        labels.push(`Нед ${4-i}`);
+        const evs = events.filter(e => {
+          if (!e.tags.includes(dir)) return false;
+          const d = new Date(e.date);
+          return d >= wStart && d < wEnd;
+        });
+        if (!evs.length) { values.push(null); }
+        else {
+          const avg = evs.reduce((s,e) => s + this.contribution(e), 0) / evs.length;
+          values.push(Math.min(10, avg));
+        }
+      }
+    } else { // all time — по месяцам, до 6
+      const months = {};
+      events.filter(e => e.tags.includes(dir)).forEach(e => {
+        const d = new Date(e.date);
+        const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+        if (!months[key]) months[key] = [];
+        months[key].push(e);
+      });
+      const keys = Object.keys(months).sort().slice(-6);
+      if (!keys.length) { labels.push('—'); values.push(null); }
+      else keys.forEach(k => {
+        const [yr, mo] = k.split('-');
+        const d = new Date(+yr, +mo-1, 1);
+        labels.push(d.toLocaleDateString('ru-RU',{month:'short'}));
+        const avg = months[k].reduce((s,e) => s + this.contribution(e), 0) / months[k].length;
+        values.push(Math.min(10, avg));
+      });
+    }
+
+    return { labels, values };
+  }
+};
+
+// ════════════════════════════════════════════════════════
+// РЕНДЕР ГРАФИКОВ
+// ════════════════════════════════════════════════════════
+
+let currentPeriod = 'week';
+
+function renderCharts(period) {
+  currentPeriod = period;
+  const events = Storage.getEvents();
+  const grid   = document.getElementById('chart-grid');
+  grid.innerHTML = '';
+
+  // Фиксированные размеры SVG — не зависят от контейнера
+  const W = 120, H = 56;
+
+  ALL_DIRS.forEach(dir => {
+    const { labels, values } = Progress.chartData(events, dir, period);
+    const color = DIR_COLORS[dir];
+
+    const cell = document.createElement('div');
+    cell.className = 'chart-cell';
+
+    // Метка
+    const lbl = document.createElement('div');
+    lbl.className = 'chart-cell-lbl';
+    lbl.textContent = dir;
+    cell.appendChild(lbl);
+
+    // Ось Y + линия
+    const area = document.createElement('div');
+    area.className = 'chart-area';
+
+    const ya = document.createElement('div');
+    ya.className = 'y-axis';
+    ya.style.height = H + 'px';
+    ya.innerHTML = '<span class="y-tick">10</span><span class="y-tick">5</span><span class="y-tick">1</span>';
+
+    // SVG с fixed px — ни при каких условиях не растянется
+    const nonNull = values.filter(v => v !== null);
+    const n = labels.length;
+
+    let svgContent = '';
+
+    if (nonNull.length >= 2) {
+      // Точки с ненулевыми значениями
+      const pts = [];
+      values.forEach((v, i) => {
+        if (v === null) return;
+        const x = Math.round(i / (n-1) * W);
+        const y = Math.round(H - ((v-1)/9) * H);
+        pts.push([x, y]);
+      });
+
+      // Полилиния только по известным точкам
+      const polyline = pts.map(p => p.join(',')).join(' ');
+      svgContent += `<polyline points="${polyline}" fill="none" stroke="${color}" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>`;
+
+      // Точки
+      pts.forEach(([x,y]) => {
+        svgContent += `<circle cx="${x}" cy="${y}" r="2.5" fill="${color}"/>`;
+      });
+    }
+
+    // Метки оси X
+    labels.forEach((l, i) => {
+      const x = n === 1 ? W/2 : Math.round(i/(n-1)*W);
+      svgContent += `<text x="${x}" y="${H+13}" text-anchor="middle" font-size="8" fill="#2a2a2a">${l}</text>`;
+    });
+
+    const wrap = document.createElement('div');
+    wrap.className = 'chart-svg-wrap';
+    wrap.innerHTML = `<svg width="${W}" height="${H+14}" viewBox="0 0 ${W} ${H+14}">${svgContent}</svg>`;
+
+    area.appendChild(ya);
+    area.appendChild(wrap);
+    cell.appendChild(area);
+    grid.appendChild(cell);
+  });
+}
+
+function setPeriod(btn, period) {
+  document.querySelectorAll('.ptab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderCharts(period);
+}
+
+// ════════════════════════════════════════════════════════
+// ГЛАВНЫЙ ЭКРАН — КВАДРАТИКИ
+// ════════════════════════════════════════════════════════
+
+function renderDots() {
+  const events = Storage.getEvents();
+
+  function makeCol(tags, containerId) {
+    const col = document.getElementById(containerId);
+    col.innerHTML = '';
+    tags.forEach(dir => {
+      const val    = Progress.forDir(events, dir);
+      const filled = Progress.toDots(val);
+
+      const sk = document.createElement('div');
+      sk.className = 'sk' + (containerId === 'dots-right' ? ' sk-r' : '');
+
+      const lbl = document.createElement('label');
+      lbl.textContent = dir;
+      sk.appendChild(lbl);
+
+      const row = document.createElement('div');
+      row.className = 'dots';
+      for (let i = 0; i < 10; i++) {
+        const d = document.createElement('div');
+        d.className = 'dot' + (i < filled ? ' on' : '');
+        row.appendChild(d);
+      }
+      sk.appendChild(row);
+      col.appendChild(sk);
+    });
+  }
+
+  makeCol(TAGS_LEFT,  'dots-left');
+  makeCol(TAGS_RIGHT, 'dots-right');
+
+  // Дата последнего обновления
+  const events2 = Storage.getEvents();
+  const sub = document.getElementById('main-updated');
+  if (events2.length) {
+    const last = new Date(Math.max(...events2.map(e => new Date(e.date))));
+    sub.textContent = 'обновлено ' + last.toLocaleDateString('ru-RU',{day:'numeric',month:'long'});
+  } else {
+    sub.textContent = 'нет данных';
+  }
+}
+
+// ════════════════════════════════════════════════════════
+// ЭКРАН ЗАПИСИ СОБЫТИЯ
+// ════════════════════════════════════════════════════════
+
+// Переключение выбора тега
+document.getElementById('tag-container').addEventListener('click', e => {
+  const tag = e.target.closest('.tag');
+  if (!tag) return;
+  const color = tag.dataset.color;
+  const selClass = 'sel-' + color;
+  tag.classList.toggle(selClass);
+  updateAnxVisibility();
+  updateSaveBtn();
+});
+
+// Следим за вводом текста события
+document.getElementById('ev-text').addEventListener('input', updateSaveBtn);
+
+// Визуальное состояние кнопки сохранения
+function updateSaveBtn() {
+  const tags = [...document.querySelectorAll('#tag-container .tag')].filter(t => {
+    return t.classList.contains('sel-' + t.dataset.color);
+  });
+  const text = document.getElementById('ev-text').value.trim();
+  const btn  = document.querySelector('.save-btn');
+  const hasContent = tags.length > 0 || text.length > 0;
+  btn.classList.toggle('disabled', !hasContent);
+}
+
+// Показывать блок тревоги только если выбран хотя бы один тег с hideAnx=0
+function updateAnxVisibility() {
+  const selected = [...document.querySelectorAll('#tag-container .tag')].filter(t => {
+    const c = t.dataset.color;
+    return t.classList.contains('sel-' + c);
+  });
+  const showAnx = selected.some(t => t.dataset.hideAnx === '0');
+  const sec = document.getElementById('anx-section');
+  sec.style.display = showAnx ? 'flex' : 'none';
+}
+
+function saveEvent() {
+  const tags = [...document.querySelectorAll('#tag-container .tag')].filter(t => {
+    return t.classList.contains('sel-' + t.dataset.color);
+  }).map(t => t.dataset.tag);
+
+  const text   = document.getElementById('ev-text').value.trim();
+
+  // Валидация: нужен хотя бы тег или текст
+  if (!tags.length && !text) {
+    const btn = document.querySelector('.save-btn');
+    btn.style.background = '#4a1a1a';
+    setTimeout(() => { btn.style.background = ''; }, 600);
+    return;
+  }
+  const weight = parseInt(document.getElementById('sl-weight').value);
+  const score  = parseInt(document.getElementById('sl-score').value);
+  const hasAnx = document.getElementById('anx-section').style.display !== 'none';
+  const anx1   = parseInt(document.getElementById('sl-anx1').value);
+  const anx2   = parseInt(document.getElementById('sl-anx2').value);
+
+  const ev = {
+    id:     Date.now(),
+    date:   new Date().toISOString(),
+    tags, text, weight, score,
+    hasAnx,
+    anx1: hasAnx ? anx1 : null,
+    anx2: hasAnx ? anx2 : null
+  };
+
+  const events = Storage.getEvents();
+  events.unshift(ev);
+  Storage.saveEvents(events);
+
+  // Сброс формы
+  document.querySelectorAll('#tag-container .tag').forEach(t => {
+    t.classList.remove('sel-te','sel-gr','sel-bl','sel-pu','sel-am','sel-pk');
+  });
+  document.getElementById('ev-text').value = '';
+  ['sl-weight','sl-score','sl-anx1','sl-anx2'].forEach(id => {
+    document.getElementById(id).value = 1;
+  });
+  ['val-weight','val-score','val-anx1','val-anx2'].forEach(id => {
+    document.getElementById(id).textContent = '1';
+  });
+  updateAnxVisibility();
+
+  // Обновить главный экран и графики
+  renderDots();
+  renderCharts(currentPeriod);
+
+  // Перейти на главную
+  showScreen('main', document.querySelector('.nb.n1'));
+}
+
+// ════════════════════════════════════════════════════════
+// ЭКРАН ЗАМЕТКИ / СОБЫТИЯ / ЗНАНИЯ
+// ════════════════════════════════════════════════════════
+
+function switchNotesMode(mode) {
+  ['notes','events','zn'].forEach(m => {
+    document.getElementById('pane-' + m).classList.toggle('active', m === mode);
+    document.getElementById('mt-' + m).classList.toggle('active', m === mode);
+  });
+}
+
+// — Заметки —
+
+function toggleAddNote() {
+  const panel = document.getElementById('note-add-panel');
+  panel.classList.toggle('open');
+  if (panel.classList.contains('open')) document.getElementById('note-input').focus();
+}
+
+function saveNote() {
+  const text = document.getElementById('note-input').value.trim();
+  if (!text) return;
+  const notes = Storage.getNotes();
+  notes.unshift({ id: Date.now(), date: new Date().toISOString(), text });
+  Storage.saveNotes(notes);
+  document.getElementById('note-input').value = '';
+  document.getElementById('note-add-panel').classList.remove('open');
+  renderNotes();
+}
+
+function renderNotes() {
+  const feed  = document.getElementById('notes-feed');
+  const notes = Storage.getNotes();
+  feed.innerHTML = '';
+  if (!notes.length) { feed.innerHTML = '<div class="feed-empty">Нет заметок</div>'; return; }
+  notes.forEach(n => {
+    const card = document.createElement('div');
+    card.className = 'note-card';
+    const d = new Date(n.date);
+    card.innerHTML = `
+      <div class="note-card-date" style="display:flex;justify-content:space-between;align-items:center">
+        <span>${d.toLocaleDateString('ru-RU',{day:'numeric',month:'long'})}, ${d.toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'})}</span>
+        <span style="color:#333;cursor:pointer;font-size:14px;padding:2px 4px" onclick="deleteNote(${n.id})">✕</span>
+      </div>
+      <div class="note-card-text">${escapeHtml(n.text)}</div>`;
+    feed.appendChild(card);
+  });
+}
+
+function deleteNote(id) {
+  const notes = Storage.getNotes().filter(n => n.id !== id);
+  Storage.saveNotes(notes);
+  renderNotes();
+}
+
+// — События —
+
+function renderEvents() {
+  const feed   = document.getElementById('events-feed');
+  const events = Storage.getEvents();
+  feed.innerHTML = '';
+  if (!events.length) { feed.innerHTML = '<div class="feed-empty">Нет сохранённых событий</div>'; return; }
+  events.forEach(ev => {
+    const card = document.createElement('div');
+    card.className = 'ev-card';
+    const d = new Date(ev.date);
+    const tagsHtml = ev.tags.map(t => `<span class="ev-card-tag">${escapeHtml(t)}</span>`).join('');
+    const anxHtml  = ev.hasAnx ? `<span>тревога: ${ev.anx1}→${ev.anx2}</span>` : '';
+    card.innerHTML = `
+      <div class="ev-card-top">
+        <span class="ev-card-date">${d.toLocaleDateString('ru-RU',{day:'numeric',month:'short'})}, ${d.toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'})}</span>
+        <div class="ev-card-tags">${tagsHtml}</div>
+      </div>
+      ${ev.text ? `<div class="ev-card-text">${escapeHtml(ev.text)}</div>` : ''}
+      <div class="ev-card-scores">
+        <span>вес: ${ev.weight}</span><span>оценка: ${ev.score}</span>${anxHtml}
+        <span style="margin-left:auto;display:flex;align-items:center;gap:8px">
+          <i class="ti ti-copy" style="color:#333;cursor:pointer;font-size:16px;padding:2px 4px" onclick="copyEvent(${ev.id}, this)" title="Скопировать для Claude"></i>
+          <span style="color:#333;cursor:pointer;font-size:14px;padding:2px 4px" onclick="deleteEvent(${ev.id})">✕</span>
+        </span>
+      </div>
+    `;
+    feed.appendChild(card);
+  });
+}
+
+function copyEvent(id, el) {
+  const ev = Storage.getEvents().find(e => e.id === id);
+  if (!ev) return;
+
+  const lines = ['У меня произошло событие:'];
+  if (ev.tags.length) lines.push(`Теги: ${ev.tags.join(', ')}`);
+  if (ev.text)        lines.push(`Текст: ${ev.text}`);
+  lines.push(`Вес: ${ev.weight} | Оценка: ${ev.score}`);
+  if (ev.hasAnx)      lines.push(`Тревога до: ${ev.anx1} → после: ${ev.anx2}`);
+  const text = lines.join('\n');
+
+  const ok = () => {
+    el.classList.remove('ti-copy');
+    el.classList.add('ti-check');
+    el.style.color = '#4ade80';
+    setTimeout(() => {
+      el.classList.remove('ti-check');
+      el.classList.add('ti-copy');
+      el.style.color = '#333';
+    }, 1500);
+  };
+
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(ok).catch(() => fallback(text, ok));
+  } else {
+    fallback(text, ok);
+  }
+}
+
+function fallback(text, cb) {
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.cssText = 'position:fixed;opacity:0;top:0;left:0';
+  document.body.appendChild(ta);
+  ta.focus(); ta.select();
+  try { document.execCommand('copy'); cb(); } catch(e) {}
+  document.body.removeChild(ta);
+}
+
+function deleteEvent(id) {
+  const events = Storage.getEvents().filter(e => e.id !== id);
+  Storage.saveEvents(events);
+  renderEvents();
+  renderDots();
+}
+
+// — Добавить знание —
+
+function addKnowledge() {
+  const title  = document.getElementById('zn-title').value.trim();
+  if (!title) return;
+  const item = {
+    id:       Date.now(),
+    category: document.getElementById('zn-cat').value,
+    title,
+    short:    document.getElementById('zn-short').value.trim(),
+    detail:   document.getElementById('zn-detail').value.trim()
+  };
+  const items = Storage.getUserKnowledge();
+  items.push(item);
+  Storage.saveUserKnowledge(items);
+  ['zn-title','zn-short','zn-detail'].forEach(id => { document.getElementById(id).value = ''; });
+  renderKnowledgeBase();
+  showScreen('bk', document.querySelector('.nb.n4'));
+}
+
+// ════════════════════════════════════════════════════════
+// БАЗА ЗНАНИЙ
+// ════════════════════════════════════════════════════════
+
+const DEFAULT_KNOWLEDGE = [
+  { id:1, category:'инструмент', title:'Мембрана',
+    short:'Реактивный фильтр от РВС. Якорь: «блок».',
+    detail:'Фиолетовое пульсирующее силовое поле вокруг тела. Ставится в момент когда замечаешь РВС — реактивный, не фоновый. Фоновая мембрана глушит эмпатию. Два касания большим пальцем по дистальной фаланге среднего пальца — активация жестом.' },
+  { id:2, category:'инструмент', title:'Core',
+    short:'Символ безусловной ценности в груди.',
+    detail:'Жёлтый топаз в груди. Ценность не нужно заслуживать — она есть по умолчанию. Жест: прижатие большого пальца к основанию среднего, пространство образует форму топаза. Работает вместе с мембраной как единый жест.' },
+  { id:3, category:'метод', title:'НСОВ',
+    short:'Наблюдение → Суждение → Оценка → Вывод.',
+    detail:'Ключевое — задерживаться на переходе от наблюдения к суждению. Суждение это уже интерпретация, не факт. Фальсификация гипотез (Поппер): искать опровержение, а не подтверждение. Суждение должно быть фальсифицируемым.' },
+  { id:4, category:'концепция', title:'РВС',
+    short:'Режим внешнего самонаблюдателя.',
+    detail:'Буквальный выход из тела — взгляд на себя глазами воображаемого наблюдателя с тревогой и враждебностью. Отличие от здорового самоанализа: наблюдающее эго смотрит с любопытством изнутри, РВС — с тревогой снаружи.' },
+  { id:5, category:'концепция', title:'Negativity bias',
+    short:'Негативное весит втрое тяжелее позитивного.',
+    detail:'Мозг эволюционно заточен замечать угрозы острее чем благополучие. Следствие: ощущение «тёмного больше» — не факт, а погрешность измерительного инструмента. Применимо к самооценке: оценка сразу после стресса систематически занижена.' },
+  { id:6, category:'концепция', title:'Условная ценность',
+    short:'Базовое ощущение что ценность нужно заслужить.',
+    detail:'Фоновое ощущение себя как «статиста пока не доказано обратное». Чужая оценка воспринимается как более объективная чем собственная. Инструмент противодействия: Core + сбор контрдоказательств из реального опыта.' },
+  { id:7, category:'концепция', title:'Мастерство неформального общения',
+    short:'Три кита: присутствие, интерес, лёгкость.',
+    detail:'Присутствие — полное внимание к человеку здесь и сейчас. Интерес — искреннее любопытство к его опыту. Лёгкость — отсутствие тревоги об оценке. Инструменты: лопата (развить тему), мост (плавно переключить), вопрос «жду или даю?».' },
+  { id:8, category:'концепция', title:'Эффект Йеркса-Додсона',
+    short:'Умеренный стресс повышает эффективность.',
+    detail:'Слишком мало стресса — скука и безразличие. Оптимальный уровень — пик эффективности. Хронический стресс — деградация и выгорание. Практический вывод: небольшая тревога перед важной ситуацией — союзник, а не враг.' },
+];
+
+function renderKnowledgeBase() {
+  const list  = document.getElementById('bk-list');
+  list.innerHTML = '';
+
+  const userItems = Storage.getUserKnowledge();
+  const allItems  = [...DEFAULT_KNOWLEDGE, ...userItems];
+
+  allItems.forEach(item => {
+    const isUser = !DEFAULT_KNOWLEDGE.find(d => d.id === item.id);
+    const st = CAT_STYLE[item.category] || CAT_STYLE['другое'];
+    const card = document.createElement('div');
+    card.className = 'bk-card';
+    card.innerHTML = `
+      <div class="bk-head">
+        <div class="bk-left">
+          <span class="bk-badge" style="background:${st.bg};color:${st.color}">${item.category}</span>
+          <div class="bk-title">${escapeHtml(item.title)}</div>
+          ${item.short ? `<div class="bk-short">${escapeHtml(item.short)}</div>` : ''}
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
+          ${isUser ? `<span style="color:#333;cursor:pointer;font-size:14px;padding:2px 4px" onclick="event.stopPropagation();deleteKnowledge(${item.id})">✕</span>` : ''}
+          <i class="ti ti-chevron-down bk-arr" aria-hidden="true"></i>
+        </div>
+      </div>
+      ${item.detail ? `<div class="bk-body">${escapeHtml(item.detail)}</div>` : ''}
+    `;
+    card.addEventListener('click', () => card.classList.toggle('open'));
+    list.appendChild(card);
+  });
+}
+
+function deleteKnowledge(id) {
+  const items = Storage.getUserKnowledge().filter(i => i.id !== id);
+  Storage.saveUserKnowledge(items);
+  renderKnowledgeBase();
+}
+
+// ════════════════════════════════════════════════════════
+// НАВИГАЦИЯ
+// ════════════════════════════════════════════════════════
+
+function showScreen(id, btn) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nb').forEach(b => b.classList.remove('active'));
+  document.getElementById('screen-' + id).classList.add('active');
+  btn.classList.add('active');
+
+  // Обновить данные при переключении
+  if (id === 'main')   renderDots();
+  if (id === 'dyn')    renderCharts(currentPeriod);
+  if (id === 'bk')     renderKnowledgeBase();
+  if (id === 'notes') { renderNotes(); renderEvents(); }
+}
+
+// ════════════════════════════════════════════════════════
+// ЭКСПОРТ ДАННЫХ
+// ════════════════════════════════════════════════════════
+
+function exportData() {
+  const data = {
+    exportDate: new Date().toISOString(),
+    version: 1,
+    events:    Storage.getEvents(),
+    notes:     Storage.getNotes(),
+    knowledge: Storage.getUserKnowledge()
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = 'progress-backup-' + new Date().toISOString().slice(0,10) + '.json';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ════════════════════════════════════════════════════════
+// УТИЛИТЫ
+// ════════════════════════════════════════════════════════
+
+function escapeHtml(s) {
+  if (!s) return '';
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ════════════════════════════════════════════════════════
+// ИНИЦИАЛИЗАЦИЯ
+// ════════════════════════════════════════════════════════
+
+document.addEventListener('DOMContentLoaded', () => {
+  renderDots();
+  renderKnowledgeBase();
+  renderCharts('week');
+  renderNotes();
+  renderEvents();
+  updateAnxVisibility();
+  updateSaveBtn();
+});
+</script>
+</body>
+</html>
