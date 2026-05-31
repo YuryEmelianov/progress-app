@@ -1,0 +1,1606 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<link rel="apple-touch-icon" href="./sleeper-icon.jpg">  
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="theme-color" content="#111111">
+<title>Прогресс</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.4.0/dist/tabler-icons.min.css">
+<style>
+/* ── Reset & Base ─────────────────────────────────── */
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+html,body{height:100%;background:#111;overflow:hidden}
+body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Inter',sans-serif;color:#e8e8e8;user-select:none}
+
+/* ── App Shell ────────────────────────────────────── */
+#app{display:flex;flex-direction:column;height:100%;max-width:430px;margin:0 auto;background:#111;position:relative}
+
+/* ── Screens ──────────────────────────────────────── */
+.screen{display:none;flex:1;flex-direction:column;overflow:hidden}
+.screen.active{display:flex}
+
+/* ── Bottom Nav ───────────────────────────────────── */
+#nav{display:flex;border-top:0.5px solid #1e1e1e;background:#0a0a0a;padding:8px 0 max(12px,env(safe-area-inset-bottom));flex-shrink:0}
+.nb{flex:1;padding:20px 4px;border:none;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.nb i{font-size:23px;color:#333;transition:color .15s}
+.nb.n1.active i{color:#e8e8e8}
+.nb.n2.active i{color:#34d399}
+.nb.n3.active i{color:#60a5fa}
+.nb.n4.active i{color:#f59e0b}
+.nb.n5.active i{color:#f472b6}
+
+/* ── SCREEN 1: Main Dashboard ─────────────────────── */
+#screen-main{padding:16px 16px 8px}
+.main-wrap{flex:1;position:relative;overflow:hidden;border-radius:12px;background:#0a0a0a;display:flex;flex-direction:column}
+.main-figure{position:absolute;inset:0;display:flex;align-items:center;justify-content:center}
+.main-figure img{width:100%;height:100%;object-fit:contain;object-position:center}
+.main-figure-fallback{position:absolute;inset:0;display:none;align-items:center;justify-content:center}
+/* Dots overlay — normal flow, sits on top of absolute figure via z-index */
+.main-overlay{position:relative;z-index:2;display:flex;justify-content:space-between;align-items:flex-start;padding:78px 6px 0;flex-shrink:0}
+.skills-col{display:flex;flex-direction:column;gap:18px}
+.sk{display:flex;flex-direction:column;gap:4px}
+.sk label{font-size:10px;color:#ccc;text-shadow:0 0 8px #000,0 1px 3px #000;letter-spacing:.02em}
+.sk-r{align-items:flex-end}
+.sk-r label{text-align:right}
+.dots{display:flex;gap:2px}
+.dot{width:9px;height:9px;border-radius:2px;background:rgba(255,255,255,.07);border:.5px solid #2e2e2e}
+.dot.on{background:rgba(255,255,255,.82);border:none}
+.main-sub{text-align:center;font-size:10px;color:#252525;padding:6px 0 2px;flex-shrink:0}
+
+/* ── SCREEN 2: Log / New Entry ────────────────────── */
+#screen-log{gap:0;padding:0 18px 10px}
+.fl-label{font-size:11px;color:#555;margin-bottom:6px;display:block}
+.tag-wrap{display:flex;flex-wrap:wrap;gap:6px}
+.tag{padding:8px 13px;border-radius:8px;font-size:12px;cursor:pointer;border:.5px solid #2a2a2a;background:#1a1a1a;color:#555;transition:all .15s}
+.tag.sel-te{background:#134e4a;color:#5eead4;border-color:transparent}
+.tag.sel-gr{background:#14532d;color:#86efac;border-color:transparent}
+.tag.sel-bl{background:#1e3a5f;color:#93c5fd;border-color:transparent}
+.tag.sel-pu{background:#3b0764;color:#c4b5fd;border-color:transparent}
+.tag.sel-am{background:#451a03;color:#fcd34d;border-color:transparent}
+.tag.sel-pk{background:#4a044e;color:#f0abfc;border-color:transparent}
+.ev-textarea{width:100%;padding:10px 12px;background:#1a1a1a;border:.5px solid #2a2a2a;border-radius:8px;color:#e8e8e8;font-size:14px;outline:none;resize:none;line-height:1.5;min-height:120px;font-family:inherit}
+.ev-textarea:focus{border-color:#444}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.sl-wrap{display:flex;flex-direction:column;gap:6px}
+.sl-row{display:flex;align-items:center;gap:8px}
+.sl-row input[type=range]{flex:1;accent-color:#7c3aed}
+.sl-val{font-size:14px;font-weight:500;color:#e8e8e8;min-width:16px;text-align:right}
+.anx-section{display:none;flex-direction:column;gap:14px}
+.save-btn{width:100%;padding:13px;border-radius:10px;border:none;background:#3b0764;color:#c4b5fd;font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:4px;transition:background .2s,opacity .2s}
+.save-btn:active{opacity:.8}
+.save-btn.disabled{background:#1e1e1e;color:#333;cursor:default}
+
+/* ── SCREEN 3: Динамика ───────────────────────────── */
+#screen-dyn{padding:20px 18px 10px}
+.period-tabs{display:flex;gap:6px;margin-bottom:16px;flex-shrink:0}
+.ptab{padding:7px 16px;border-radius:20px;font-size:11px;border:.5px solid #2a2a2a;background:transparent;color:#555;cursor:pointer}
+.ptab.active{background:#1e3a5f;color:#93c5fd;border-color:transparent}
+/* 2×3 chart grid */
+.chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-content:start}
+.chart-cell{background:#1a1a1a;border:.5px solid #222;border-radius:10px;padding:10px 8px 6px;display:flex;flex-direction:column;gap:4px}
+.chart-cell-lbl{font-size:10px;color:#555}
+.chart-area{display:flex;gap:4px;align-items:flex-start}
+.y-axis{display:flex;flex-direction:column;justify-content:space-between;width:14px;flex-shrink:0}
+.y-tick{font-size:8px;color:#2a2a2a;text-align:right;line-height:1}
+.chart-svg-wrap{flex:1}
+.chart-svg-wrap svg{display:block;width:100%;height:90px}
+
+/* ── SCREEN 4: База знаний ────────────────────────── */
+#screen-bk{padding:0 18px 10px;flex-direction:column}
+.bk-card{background:#1a1a1a;border:.5px solid #222;border-radius:10px;overflow:hidden;cursor:pointer;flex-shrink:0;-webkit-user-select:none;user-select:none}
+.bk-body{display:none;padding:0 14px 12px;font-size:12px;color:#666;line-height:1.6;border-top:.5px solid #1e1e1e;-webkit-user-select:text;user-select:text}
+.bk-body svg{width:calc(100% + 28px);height:auto;display:block;padding:8px 0;margin:0 -14px}
+.bk-card.open .bk-body{display:block}
+.bk-card.open .bk-arr{transform:rotate(180deg)}
+.bk-head{padding:12px 14px;display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.bk-left{display:flex;flex-direction:column;gap:2px;flex:1;min-width:0}
+.bk-badge{display:inline-block;font-size:10px;padding:2px 8px;border-radius:4px;margin-bottom:4px}
+.bk-title{font-size:13px;color:#e8e8e8;font-weight:500}
+.bk-short{font-size:11px;color:#555;margin-top:2px;line-height:1.4}
+.bk-card-bottom{display:flex;align-items:center;gap:10px;font-size:10px;color:#444;padding:8px 14px;border-top:.5px solid #1e1e1e}
+.bk-type-pill{background:rgba(255,255,255,0.08);color:#666;border-radius:4px;padding:2px 7px;font-size:10px;border:.5px solid rgba(255,255,255,0.1)}
+.bk-arr{font-size:16px;color:#333;transition:transform .2s;margin-left:8px;flex-shrink:0}
+
+/* ── SCREEN 5: Заметки / События / Знания ─────────── */
+#screen-notes{padding:16px 18px 10px;flex-direction:column}
+.mode-toggle{display:flex;background:#1a1a1a;border-radius:8px;padding:3px;margin-bottom:14px;border:.5px solid #222;flex-shrink:0}
+.mtab{flex:1;padding:7px;border:none;background:transparent;color:#555;font-size:12px;border-radius:6px;cursor:pointer}
+.mtab.active{background:#111;color:#e8e8e8}
+.tab-pane{display:none;flex-direction:column;flex:1;overflow:hidden}
+.tab-pane.active{display:flex}
+
+/* Notes mode */
+.feed{display:flex;flex-direction:column;gap:8px;flex:1;overflow-y:auto}
+.feed-empty{font-size:12px;color:#333;text-align:center;padding-top:40px}
+.note-card{background:#1a1a1a;border:.5px solid #222;border-radius:10px;padding:12px 14px;flex-shrink:0}
+.note-card-date{font-size:10px;color:#444;margin-bottom:6px}
+.note-card-text{font-size:13px;color:#888;line-height:1.6;user-select:text}
+.ev-card{background:#1a1a1a;border:.5px solid #222;border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:5px;flex-shrink:0}
+.ev-card-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.ev-card-date{font-size:10px;color:#444;flex-shrink:0}
+.ev-card-tags{display:flex;flex-wrap:wrap;gap:3px}
+.ev-card-tag{font-size:10px;color:#555;background:#222;border-radius:4px;padding:2px 6px}
+.ev-card-text{font-size:12px;color:#888;line-height:1.5;user-select:text}
+.ev-card-scores{display:flex;gap:10px;font-size:10px;color:#444}
+
+/* Add panel (notes) */
+.add-panel{display:none;flex-direction:column;gap:8px;flex-shrink:0;margin-top:8px}
+.add-panel.open{display:flex}
+.note-input{width:100%;padding:10px 12px;background:#1a1a1a;border:.5px solid #2a2a2a;border-radius:8px;color:#e8e8e8;font-size:14px;outline:none;resize:none;line-height:1.6;min-height:90px;font-family:inherit}
+.note-input:focus{border-color:#444}
+.note-save{width:100%;padding:11px;border-radius:8px;border:.5px solid #333;background:transparent;color:#888;font-size:13px;cursor:pointer}
+.plus-btn{width:100%;padding:11px;border-radius:10px;border:.5px solid #2a2a2a;background:transparent;color:#555;font-size:20px;cursor:pointer;flex-shrink:0;margin-top:8px}
+
+/* Knowledge add form */
+.zn-form{display:flex;flex-direction:column;gap:12px;overflow-y:auto;flex:1}
+.zn-input{width:100%;padding:10px 12px;background:#1a1a1a;border:.5px solid #2a2a2a;border-radius:8px;color:#e8e8e8;font-size:14px;outline:none;font-family:inherit}
+.zn-input:focus{border-color:#444}
+.zn-select{width:100%;padding:10px 12px;background:#1a1a1a;border:.5px solid #2a2a2a;border-radius:8px;color:#e8e8e8;font-size:14px;outline:none}
+.zn-textarea{width:100%;padding:10px 12px;background:#1a1a1a;border:.5px solid #2a2a2a;border-radius:8px;color:#e8e8e8;font-size:14px;outline:none;resize:none;min-height:90px;font-family:inherit;line-height:1.5}
+.zn-textarea:focus{border-color:#444}
+.zn-add-btn{width:100%;padding:13px;border-radius:10px;border:none;background:#1e3a5f;color:#93c5fd;font-size:20px;cursor:pointer;flex-shrink:0}
+
+/* Filter tags */
+.filter-scroll{display:flex;gap:5px;overflow-x:auto;flex-shrink:0;padding-bottom:4px;scrollbar-width:none;min-width:0}
+.filter-scroll::-webkit-scrollbar{display:none}
+.ev-filter-tag{padding:5px 11px;border-radius:20px;font-size:11px;border:.5px solid #2a2a2a;background:transparent;color:#444;cursor:pointer;white-space:nowrap;flex-shrink:0}
+.ev-filter-tag.active{background:#14532d;color:#86efac;border-color:transparent}
+.note-tag-btn{padding:5px 11px;border-radius:20px;font-size:11px;border:.5px solid #2a2a2a;background:transparent;color:#444;cursor:pointer;user-select:none}
+.note-tag-btn.sel{background:var(--tag-bg);color:var(--tag-color);border-color:transparent}
+.filter-row{display:flex;align-items:center;gap:6px;flex-shrink:0;padding-top:16px;padding-bottom:4px;overflow:hidden}
+.filter-add-btn{flex-shrink:0;width:24px;height:24px;border-radius:50%;border:.5px solid #2a2a2a;background:transparent;color:#555;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;margin-top:3px;align-self:flex-start}
+
+/* Category modal */
+.bk-card.dragging{opacity:0.4;transform:scale(0.98)}
+.bk-card.drag-over{border-color:#555;border-style:dashed}
+.drag-ghost{position:fixed;pointer-events:none;z-index:1000;opacity:0.9;box-shadow:0 8px 32px rgba(0,0,0,0.6);border-radius:10px;background:#1a1a1a}
+.cat-modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:100;align-items:center;justify-content:center}
+.cat-modal-overlay.open{display:flex}
+.cat-modal{background:#1a1a1a;border:.5px solid #2a2a2a;border-radius:14px;padding:20px;width:280px;display:flex;flex-direction:column;gap:14px}
+.cat-modal-title{font-size:13px;color:#888;text-align:center}
+.cat-modal input{width:100%;padding:10px 12px;background:#111;border:.5px solid #2a2a2a;border-radius:8px;color:#e8e8e8;font-size:14px;outline:none;font-family:inherit;box-sizing:border-box}
+.cat-modal input:focus{border-color:#444}
+.color-palette{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.color-swatch{width:28px;height:28px;border-radius:50%;cursor:pointer;border:2px solid transparent}
+.color-swatch.sel{border-color:#fff}
+.cat-modal-btns{display:flex;gap:8px}
+.cat-modal-btns button{flex:1;padding:10px;border-radius:8px;font-size:13px;cursor:pointer;border:.5px solid #333}
+.cat-modal-cancel{background:transparent;color:#555}
+.cat-modal-save{background:#1e3a5f;color:#93c5fd;border-color:#1e3a5f}
+
+/* Export button */
+.export-btn{margin:0 18px 12px;padding:10px;border-radius:8px;border:.5px solid #2a2a2a;background:transparent;color:#444;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px}
+.export-btn i{font-size:16px}
+
+/* ── Дневник ──────────────────────────────────────── */
+.diary-card{background:#1a1a1a;border:.5px solid #222;border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:6px;flex-shrink:0}
+.diary-card-header{display:flex;justify-content:space-between;align-items:center}
+.diary-card-date{font-size:10px;color:#444}
+.diary-card-mood{font-size:16px;line-height:1}
+.diary-card-title{font-size:13px;color:#e8e8e8;font-weight:500}
+.diary-card-dirs{display:flex;flex-wrap:wrap;gap:4px;margin-top:2px}
+.diary-card-dir{font-size:10px;color:#555;background:#222;border-radius:4px;padding:2px 7px;display:flex;align-items:center;gap:3px}
+.diary-card-dir-score{color:#888}
+.diary-card-text{font-size:12px;color:#555;line-height:1.5;margin-top:2px}
+.diary-card-actions{display:flex;align-items:center;gap:8px;margin-left:auto}
+
+/* Форма дневника */
+.diary-form{display:flex;flex-direction:column;gap:14px;padding:12px 0 4px}
+.diary-form-header{display:flex;justify-content:space-between;align-items:center}
+.diary-form-date{font-size:11px;color:#555}
+.mood-picker{display:flex;gap:6px}
+.mood-btn{font-size:20px;opacity:0.3;cursor:pointer;padding:2px;transition:opacity .15s,filter .15s;border:none;background:transparent;filter:grayscale(1)}
+.mood-btn.sel{opacity:1;filter:grayscale(1) brightness(2)}
+.diary-title-input{width:100%;padding:8px 12px;background:#1a1a1a;border:.5px solid #2a2a2a;border-radius:8px;color:#e8e8e8;font-size:14px;outline:none;font-family:inherit}
+.diary-title-input:focus{border-color:#444}
+.diary-title-input::placeholder{color:#333}
+.diary-dirs{display:flex;flex-direction:column;gap:10px}
+.diary-dir-row{display:flex;align-items:center;gap:10px}
+.diary-dir-label{font-size:11px;color:#555;width:32px;flex-shrink:0;text-align:right}
+.diary-dots-row{display:flex;gap:3px;flex:1}
+.diary-dot{width:22px;height:22px;border-radius:4px;background:rgba(255,255,255,.06);border:.5px solid #2a2a2a;cursor:pointer;transition:background .1s,border-color .1s;flex-shrink:0}
+.diary-dot.sel{background:rgba(255,255,255,.82);border-color:transparent}
+.diary-dot.empty-sel{background:transparent;border-color:transparent}
+.diary-skip-btn{font-size:10px;color:#2a2a2a;cursor:pointer;padding:2px 4px;border:none;background:transparent;flex-shrink:0;white-space:nowrap}
+.diary-skip-btn.skipped{color:#444}
+.diary-textarea{width:100%;padding:10px 12px;background:#1a1a1a;border:.5px solid #2a2a2a;border-radius:8px;color:#e8e8e8;font-size:14px;outline:none;resize:none;line-height:1.5;min-height:80px;font-family:inherit}
+.diary-textarea:focus{border-color:#444}
+.diary-textarea::placeholder{color:#333}
+
+/* Баннер напоминания на главном экране */
+.reminder-pill{display:none;align-self:center;margin:0 16px 8px;background:#5c4a0a;color:#e6c84a;font-size:11px;padding:5px 14px;border-radius:20px;cursor:pointer;text-align:center;flex-shrink:0}
+.reminder-pill.visible{display:block}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ═══════════════════════════════════════════
+       SCREEN 1 — ГЛАВНАЯ
+  ════════════════════════════════════════════════ -->
+  <div id="screen-main" class="screen active">
+    <div class="main-wrap" style="position:relative">
+      <div style="padding:64px 4px 8px;font-size:26px;letter-spacing:0.12em;text-transform:lowercase;text-align:center;flex-shrink:0">
+        <span style="color:#bbb">sl</span><span style="color:#7c3aed">e</span><span style="color:#f8fd45">e</span><span style="color:#bbb">per</span>
+      </div>
+      <!-- Иллюстрация (положи figure.jpg рядом с index.html) -->
+      <div class="main-figure">
+        <img src="./figure.jpg" alt="" onerror="this.style.display='none'" style="width:72%;height:72%;object-fit:contain;object-position:center center">
+      </div>
+      <!-- Квадратики — поверх иллюстрации, золотое сечение -->
+      <div class="main-overlay">
+        <div class="skills-col" id="dots-left"></div>
+        <div style="flex:0 0 90px"></div>
+        <div class="skills-col" id="dots-right"></div>
+      </div>
+      <div style="position:absolute;bottom:64px;left:0;right:0;text-align:center;font-size:11px;color:rgba(255,255,255,0.15);letter-spacing:0.08em;z-index:2">version 1.0</div>
+    </div>
+    <div class="main-sub" id="main-updated"></div>
+    <div class="reminder-pill" id="reminder-pill" onclick="showScreen('log', document.querySelector('.nb.n2'))">вчера без записи — заполни дневник</div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       SCREEN 2 — ДНЕВНИК
+  ════════════════════════════════════════════════ -->
+  <div id="screen-log" class="screen">
+    <!-- История записей -->
+    <div class="feed" id="diary-feed" style="flex:1;min-height:0;overflow-y:auto;padding-top:12px">
+      <div class="feed-empty">Нет записей</div>
+    </div>
+    <!-- Кнопка добавить -->
+    <button class="plus-btn" onclick="toggleAddDiary()" id="diary-plus-btn">+</button>
+    <!-- Форма (скрыта по умолчанию) -->
+    <div class="add-panel" id="diary-add-panel" style="padding:0 0 4px;overflow-y:auto;max-height:70vh">
+      <div class="diary-form">
+        <!-- Заголовок формы: дата + настроение -->
+        <div class="diary-form-header">
+          <input type="date" id="diary-form-date" style="background:transparent;border:none;color:#555;font-size:11px;font-family:inherit;outline:none;cursor:pointer;padding:0;-webkit-appearance:none;appearance:none">
+          <div class="mood-picker" id="mood-picker">
+            <button class="mood-btn" data-mood="😞" onclick="selectMood(this)">😞</button>
+            <button class="mood-btn" data-mood="😕" onclick="selectMood(this)">😕</button>
+            <button class="mood-btn sel" data-mood="😐" onclick="selectMood(this)">😐</button>
+            <button class="mood-btn" data-mood="🙂" onclick="selectMood(this)">🙂</button>
+            <button class="mood-btn" data-mood="😊" onclick="selectMood(this)">😊</button>
+          </div>
+        </div>
+        <!-- Заголовок дня -->
+        <input class="diary-title-input" id="diary-title" type="text" placeholder="Заголовок дня (необязательно)">
+        <!-- Направления -->
+        <div class="diary-dirs" id="diary-dirs"></div>
+        <!-- Свободный текст -->
+        <textarea class="diary-textarea" id="diary-text" placeholder="Как прошёл день..."></textarea>
+        <!-- Сохранить -->
+        <button class="save-btn" onclick="saveDiary()" id="diary-save-btn">
+          <i class="ti ti-device-floppy" aria-hidden="true"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       SCREEN 3 — ДИНАМИКА
+  ════════════════════════════════════════════════ -->
+  <div id="screen-dyn" class="screen">
+    <div class="period-tabs" style="flex-shrink:0;padding:0 18px;padding-top:20px">
+      <button class="ptab active" onclick="setPeriod(this,'week')">Неделя</button>
+      <button class="ptab" onclick="setPeriod(this,'month')">Месяц</button>
+      <button class="ptab" onclick="setPeriod(this,'all')">Всё время</button>
+    </div>
+    <div class="chart-grid" id="chart-grid" style="padding:0 18px 18px;overflow-y:auto"></div>
+    <button class="export-btn" onclick="exportData()" style="margin:0 18px 16px"><i class="ti ti-download" aria-hidden="true"></i>Экспорт данных</button>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       SCREEN 4 — БАЗА ЗНАНИЙ
+  ════════════════════════════════════════════════ -->
+  <div id="screen-bk" class="screen">
+    <div class="filter-row">
+      <div id="bk-filter-wrap" class="filter-scroll" style="flex:1;min-width:0"></div>
+      <button class="filter-add-btn" id="cat-add-btn" onclick="openCatModal()" title="Добавить категорию">+</button>
+    </div>
+    <div class="feed" id="bk-list"></div>
+    <button class="plus-btn" onclick="toggleAddKnowledge()" id="bk-plus-btn">+</button>
+    <div class="add-panel" id="knowledge-add-panel" style="flex-direction:column;gap:12px;padding:12px 18px 10px">
+      <div>
+        <span class="fl-label">Тип</span>
+        <select class="zn-select" id="zn-type">
+          <option value="концепция">концепция</option>
+          <option value="инструмент">инструмент</option>
+          <option value="метод">метод</option>
+          <option value="схема">схема</option>
+          <option value="другое">другое</option>
+        </select>
+      </div>
+      <div>
+        <span class="fl-label">Категория</span>
+        <select class="zn-select" id="zn-cat">
+          <option value="">— без категории —</option>
+        </select>
+      </div>
+      <div>
+        <span class="fl-label">Название</span>
+        <input class="zn-input" id="zn-title" type="text">
+      </div>
+      <div>
+        <span class="fl-label">Краткое определение</span>
+        <input class="zn-input" id="zn-short" type="text">
+      </div>
+      <div>
+        <span class="fl-label">Подробный текст</span>
+        <textarea class="zn-textarea" id="zn-detail"></textarea>
+      </div>
+      <button class="zn-add-btn" onclick="addKnowledge()">+</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       SCREEN 5 — ЗАМЕТКИ / СОБЫТИЯ / ЗНАНИЯ
+  ════════════════════════════════════════════════ -->
+  <div id="screen-notes" class="screen">
+    <!-- Фильтры -->
+    <div id="note-filter-wrap" class="filter-scroll" style="flex-shrink:0;padding-bottom:4px"></div>
+    <!-- Лента заметок -->
+    <div class="feed" id="notes-feed">
+      <div class="feed-empty">Нет заметок</div>
+    </div>
+    <div class="add-panel" id="note-add-panel">
+      <!-- Теги -->
+      <div style="display:flex;flex-wrap:wrap;gap:6px">
+        <span class="note-tag-btn" data-tag="обсудить" style="--tag-bg:#451a03;--tag-color:#fbbf24" onclick="toggleNoteTag(this)">обсудить</span>
+        <span class="note-tag-btn" data-tag="инсайт"   style="--tag-bg:#4a044e;--tag-color:#f0abfc" onclick="toggleNoteTag(this)">инсайт</span>
+        <span class="note-tag-btn" data-tag="задача"   style="--tag-bg:#431407;--tag-color:#fb923c" onclick="toggleNoteTag(this)">задача</span>
+        <span class="note-tag-btn" data-tag="фрагмент" style="--tag-bg:#1c1917;--tag-color:#a8a29e" onclick="toggleNoteTag(this)">фрагмент</span>
+      </div>
+      <textarea class="note-input" id="note-input"></textarea>
+      <button class="note-save" onclick="saveNote()">Сохранить</button>
+    </div>
+    <button class="plus-btn" onclick="toggleAddNote()">+</button>
+  </div>
+
+  <!-- ═══ Нижняя навигация ═══ -->
+  <nav id="nav">
+    <button class="nb n1 active" onclick="showScreen('main',this)" aria-label="Главная"><i class="ti ti-user" aria-hidden="true"></i></button>
+    <button class="nb n2" onclick="showScreen('log',this)" aria-label="Записи"><i class="ti ti-pencil" aria-hidden="true"></i></button>
+    <button class="nb n3" onclick="showScreen('dyn',this)" aria-label="Динамика"><i class="ti ti-chart-line" aria-hidden="true"></i></button>
+    <button class="nb n4" onclick="showScreen('bk',this)" aria-label="База знаний"><i class="ti ti-books" aria-hidden="true"></i></button>
+    <button class="nb n5" onclick="showScreen('notes',this)" aria-label="Заметки"><i class="ti ti-notes" aria-hidden="true"></i></button>
+  </nav>
+
+  <!-- ═══ Модальное окно: добавить категорию ═══ -->
+  <div class="cat-modal-overlay" id="cat-modal-overlay" onclick="closeCatModalIfOutside(event)">
+    <div class="cat-modal">
+      <div class="cat-modal-title" id="cat-modal-title">Новая категория</div>
+      <input id="cat-name-input" type="text" placeholder="Название категории">
+      <div class="color-palette" id="cat-color-palette"></div>
+      <div class="cat-modal-btns">
+        <button class="cat-modal-cancel" id="cat-modal-left-btn" onclick="handleCatModalLeft()">Отмена</button>
+        <button class="cat-modal-save" onclick="saveCatModal()">Сохранить</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ════════════════════════════════════════════════════════
+// КОНСТАНТЫ
+// ════════════════════════════════════════════════════════
+
+// Все направления (порядок важен: 3 слева, 3 справа)
+const TAGS_LEFT  = ['НСОВ', 'МНО', 'З&С'];
+const TAGS_RIGHT = ['РВС', 'ПГ', 'Core'];
+const ALL_DIRS   = [...TAGS_LEFT, ...TAGS_RIGHT];
+
+// Цвета для графиков
+const DIR_COLORS = {
+  'НСОВ': '#0f766e',
+  'МНО':  '#16a34a',
+  'З&С':  '#1d4ed8',
+  'РВС':  '#7c3aed',
+  'ПГ':   '#b45309',
+  'Core': '#d97706'
+};
+
+// Нелинейные пороги для квадратиков (индекс = количество заполненных)
+// Значение направления 0–10 → кол-во закрашенных квадратиков
+const DOT_THRESHOLDS = [0, 2.0, 3.0, 4.0, 4.8, 5.5, 6.1, 6.7, 7.3, 8.0, 9.0];
+
+// Постоянная затухания (дни). Запись месячной давности весит ~37%
+const DECAY_DAYS = 30;
+
+// Стили категорий для базы знаний
+const CAT_STYLE = {
+  'инструмент': { bg:'#3b0764', color:'#c4b5fd' },
+  'метод':      { bg:'#134e4a', color:'#5eead4' },
+  'концепция':  { bg:'#14532d', color:'#86efac' },
+  'другое':     { bg:'#1e3a5f', color:'#93c5fd' },
+  'схема':      { bg:'#3b2000', color:'#fbbf24' }
+};
+
+const NOTE_TAG_STYLE = {
+  'обсудить': { bg:'#451a03', color:'#fbbf24' },
+  'инсайт':   { bg:'#4a044e', color:'#f0abfc' },
+  'задача':   { bg:'#431407', color:'#fb923c' },
+  'фрагмент': { bg:'#1c1917', color:'#a8a29e' }
+};
+
+// ════════════════════════════════════════════════════════
+// МЕНЕДЖЕР КАТЕГОРИЙ
+// ════════════════════════════════════════════════════════
+
+const CAT_PALETTE = [
+  { bg:'#1a2744', color:'#7eb3f7' },
+  { bg:'#0d3320', color:'#6ee7a0' },
+  { bg:'#3b0764', color:'#c4b5fd' },
+  { bg:'#3b1010', color:'#f87171' },
+  { bg:'#451a03', color:'#fbbf24' },
+  { bg:'#431407', color:'#fb923c' },
+  { bg:'#1c2030', color:'#a5b4fc' },
+  { bg:'#0f2a2a', color:'#5eead4' },
+  { bg:'#2a1a30', color:'#e879f9' },
+  { bg:'#1c1917', color:'#d6d3d1' },
+];
+
+let catModalSelectedColor = CAT_PALETTE[0];
+
+function getAllCats() {
+  const base = ['инструмент','метод','концепция','схема','другое'];
+  const custom = Storage.getCustomCats().map(c => c.name);
+  return [...base, ...custom];
+}
+
+function getCatStyle(name) {
+  if (CAT_STYLE[name]) return CAT_STYLE[name];
+  const custom = Storage.getCustomCats().find(c => c.name === name);
+  return custom ? { bg: custom.bg, color: custom.color } : CAT_STYLE['другое'];
+}
+
+let catModalEditingName = null; // null = создание, строка = редактирование
+
+// Диспетчер левой кнопки — вызывается через onclick в HTML
+function handleCatModalLeft() {
+  if (catModalEditingName) {
+    deleteCatModal();
+  } else {
+    closeCatModal();
+  }
+}
+
+function openCatModal(editName = null) {
+  catModalEditingName = editName;
+  const isEdit = editName !== null;
+
+  document.getElementById('cat-modal-title').textContent = isEdit ? 'Редактировать категорию' : 'Новая категория';
+
+  // Обновляем левую кнопку напрямую — без cloneNode
+  const leftBtn = document.getElementById('cat-modal-left-btn');
+  leftBtn.textContent = isEdit ? 'Удалить' : 'Отмена';
+  leftBtn.style.color  = isEdit ? '#f87171' : '';
+
+  // Заполняем поле названия
+  const existingCat = isEdit ? Storage.getCustomCats().find(c => c.name === editName) : null;
+  document.getElementById('cat-name-input').value = isEdit ? editName : '';
+
+  // Находим текущий цвет если редактируем
+  catModalSelectedColor = existingCat
+    ? CAT_PALETTE.find(p => p.bg === existingCat.bg) || CAT_PALETTE[0]
+    : CAT_PALETTE[0];
+
+  // Рендерим палитру
+  const palette = document.getElementById('cat-color-palette');
+  palette.innerHTML = '';
+  CAT_PALETTE.forEach(c => {
+    const sw = document.createElement('div');
+    sw.className = 'color-swatch';
+    sw.style.background = c.color;
+    sw.style.borderColor = c.bg === catModalSelectedColor.bg ? '#fff' : 'transparent';
+    sw.onclick = () => {
+      catModalSelectedColor = c;
+      palette.querySelectorAll('.color-swatch').forEach(s => s.style.borderColor = 'transparent');
+      sw.style.borderColor = '#fff';
+    };
+    palette.appendChild(sw);
+  });
+
+  document.getElementById('cat-modal-overlay').classList.add('open');
+  setTimeout(() => document.getElementById('cat-name-input').focus(), 100);
+}
+
+function closeCatModal() {
+  document.getElementById('cat-modal-overlay').classList.remove('open');
+}
+
+function closeCatModalIfOutside(e) {
+  if (e.target === e.currentTarget) closeCatModal();
+}
+
+function deleteCatModal() {
+  if (!catModalEditingName) return;
+  const oldName = catModalEditingName;
+  closeCatModal(); // закрываем сразу, до рендера
+  const cats = Storage.getCustomCats().filter(c => c.name !== oldName);
+  Storage.saveCustomCats(cats);
+  const items = Storage.getUserKnowledge().map(i =>
+    i.category === oldName ? { ...i, category: '' } : i
+  );
+  Storage.saveUserKnowledge(items);
+  updateCatSelect();
+  renderKnowledgeBase();
+}
+
+function saveCatModal() {
+  const name = document.getElementById('cat-name-input').value.trim().toLowerCase();
+  if (!name) return;
+  closeCatModal(); // закрываем сразу после валидации, до рендера
+  if (catModalEditingName) {
+    const oldName = catModalEditingName;
+    const cats = Storage.getCustomCats().map(c =>
+      c.name === oldName
+        ? { name, bg: catModalSelectedColor.bg, color: catModalSelectedColor.color }
+        : c
+    );
+    Storage.saveCustomCats(cats);
+    const items = Storage.getUserKnowledge().map(i =>
+      i.category === oldName ? { ...i, category: name } : i
+    );
+    Storage.saveUserKnowledge(items);
+  } else {
+    if (Storage.getCustomCats().find(c => c.name === name)) return;
+    const cats = Storage.getCustomCats();
+    cats.push({ name, bg: catModalSelectedColor.bg, color: catModalSelectedColor.color });
+    Storage.saveCustomCats(cats);
+  }
+  updateCatSelect();
+  renderKnowledgeBase();
+}
+
+function updateCatSelect() {
+  const sel = document.getElementById('zn-cat');
+  if (!sel) return;
+  const current = sel.value;
+  sel.innerHTML = '<option value="">— без категории —</option>';
+  Storage.getCustomCats().forEach(c => {
+    const opt = document.createElement('option');
+    opt.value = c.name;
+    opt.textContent = c.name;
+    if (c.name === current) opt.selected = true;
+    sel.appendChild(opt);
+  });
+}
+
+// ════════════════════════════════════════════════════════
+// ХРАНИЛИЩЕ (localStorage)
+// ════════════════════════════════════════════════════════
+
+const Storage = {
+  _get(key, def) {
+    try { return JSON.parse(localStorage.getItem(key)) ?? def; }
+    catch { return def; }
+  },
+  _set(key, val) {
+    try { localStorage.setItem(key, JSON.stringify(val)); } catch(e) {}
+  },
+  getEvents()          { return this._get('tracker_events', []); },
+  saveEvents(v)        { this._set('tracker_events', v); },
+  getDiary()           { return this._get('tracker_diary', []); },
+  saveDiary(v)         { this._set('tracker_diary', v); },
+  getNotes()             { return this._get('tracker_notes', []); },
+  saveNotes(v)           { this._set('tracker_notes', v); },
+  getUserKnowledge()     { return this._get('tracker_knowledge', []); },
+  saveUserKnowledge(v)   { this._set('tracker_knowledge', v); },
+  getCustomCats()        { return this._get('tracker_custom_cats', []); },
+  saveCustomCats(v)      { this._set('tracker_custom_cats', v); },
+};
+
+// ════════════════════════════════════════════════════════
+// ФОРМУЛЫ ПРОГРЕССА
+// ════════════════════════════════════════════════════════
+
+const Progress = {
+  // Вклад одной записи дневника по конкретному направлению
+  contribution(entry, dir) {
+    const d = entry.dirs && entry.dirs[dir];
+    if (!d || d.skipped || !d.score) return null;
+    return d.score; // оценка 1–10 напрямую
+  },
+
+  // Длина стрика по направлению (кол-во последовательных дней с записями)
+  streak(diary, dir) {
+    const dirEntries = diary.filter(e => e.dirs && e.dirs[dir] && !e.dirs[dir].skipped && e.dirs[dir].score);
+    if (!dirEntries.length) return 0;
+
+    const today     = new Date().toISOString().slice(0,10);
+    const yesterday = new Date(Date.now()-86400000).toISOString().slice(0,10);
+
+    const dates = [...new Set(dirEntries.map(e => e.date.slice(0,10)))].sort().reverse();
+
+    if (dates[0] !== today && dates[0] !== yesterday) return 0;
+
+    let streak = 1;
+    for (let i = 1; i < dates.length; i++) {
+      const diff = (new Date(dates[i-1]) - new Date(dates[i])) / 86400000;
+      if (diff === 1) streak++;
+      else break;
+    }
+    return streak;
+  },
+
+  // Мультипликатор стрика: макс. +30% при 7+ днях подряд
+  streakMult(streak) {
+    return 1 + Math.min(Math.max(0, streak - 1), 6) * 0.05;
+  },
+
+  // Итоговое значение направления 0–10
+  forDir(diary, dir) {
+    const ANCHOR_VALUE  = 5;
+    const ANCHOR_WEIGHT = 3.87;
+
+    const now  = Date.now();
+    const mult = this.streakMult(this.streak(diary, dir));
+
+    let wSum = ANCHOR_VALUE * ANCHOR_WEIGHT;
+    let wTot = ANCHOR_WEIGHT;
+
+    diary.forEach(entry => {
+      const contrib = this.contribution(entry, dir);
+      if (contrib === null) return;
+      const daysAgo = (now - new Date(entry.date).getTime()) / 86400000;
+      const decay   = Math.exp(-daysAgo / DECAY_DAYS);
+      wSum += Math.min(10, contrib * mult) * decay;
+      wTot += decay;
+    });
+
+    return Math.max(0, Math.min(10, wSum / wTot));
+  },
+
+  // Значение → кол-во заполненных квадратиков (0–10)
+  toDots(val) {
+    let filled = 0;
+    for (let i = 1; i <= 10; i++) {
+      if (val >= DOT_THRESHOLDS[i]) filled = i;
+      else break;
+    }
+    return filled;
+  },
+
+  // Данные для графика одного направления по периоду
+  chartData(diary, dir, period) {
+    const now    = new Date();
+    const labels = [];
+    const values = [];
+
+    const dayStr = d => d.toISOString().slice(0,10);
+
+    if (period === 'week') {
+      for (let i = 6; i >= 0; i--) {
+        const d = new Date(now); d.setDate(d.getDate() - i);
+        const ds = dayStr(d);
+        labels.push(d.toLocaleDateString('ru-RU',{weekday:'short'}));
+        const entries = diary.filter(e => e.date.slice(0,10) === ds);
+        const scores = entries.map(e => this.contribution(e, dir)).filter(v => v !== null);
+        if (!scores.length) { values.push(null); continue; }
+        values.push(scores.reduce((a,b)=>a+b,0) / scores.length);
+      }
+    } else if (period === 'month') {
+      for (let i = 3; i >= 0; i--) {
+        const wEnd   = new Date(now); wEnd.setDate(wEnd.getDate() - i*7);
+        const wStart = new Date(wEnd); wStart.setDate(wStart.getDate() - 7);
+        labels.push(`Нед ${4-i}`);
+        const entries = diary.filter(e => {
+          const d = new Date(e.date);
+          return d >= wStart && d < wEnd;
+        });
+        const scores = entries.map(e => this.contribution(e, dir)).filter(v => v !== null);
+        if (!scores.length) { values.push(null); }
+        else values.push(scores.reduce((a,b)=>a+b,0) / scores.length);
+      }
+    } else {
+      const months = {};
+      diary.forEach(e => {
+        const contrib = this.contribution(e, dir);
+        if (contrib === null) return;
+        const d = new Date(e.date);
+        const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+        if (!months[key]) months[key] = [];
+        months[key].push(contrib);
+      });
+      const keys = Object.keys(months).sort().slice(-6);
+      if (!keys.length) { labels.push('—'); values.push(null); }
+      else keys.forEach(k => {
+        const [yr, mo] = k.split('-');
+        const d = new Date(+yr, +mo-1, 1);
+        labels.push(d.toLocaleDateString('ru-RU',{month:'short'}));
+        const arr = months[k];
+        values.push(arr.reduce((a,b)=>a+b,0) / arr.length);
+      });
+    }
+
+    return { labels, values };
+  }
+};
+
+// ════════════════════════════════════════════════════════
+// РЕНДЕР ГРАФИКОВ
+// ════════════════════════════════════════════════════════
+
+let currentPeriod = 'week';
+
+function renderCharts(period) {
+  currentPeriod = period;
+  const diary = Storage.getDiary();
+  const grid  = document.getElementById('chart-grid');
+  grid.innerHTML = '';
+
+  // Фиксированные размеры SVG — не зависят от контейнера
+  const W = 120, H = 90;
+
+  ALL_DIRS.forEach(dir => {
+    const { labels, values } = Progress.chartData(diary, dir, period);
+    const color = DIR_COLORS[dir];
+
+    const cell = document.createElement('div');
+    cell.className = 'chart-cell';
+
+    // Метка
+    const lbl = document.createElement('div');
+    lbl.className = 'chart-cell-lbl';
+    lbl.textContent = dir;
+    cell.appendChild(lbl);
+
+    // Ось Y + линия
+    const area = document.createElement('div');
+    area.className = 'chart-area';
+
+    const ya = document.createElement('div');
+    ya.className = 'y-axis';
+    ya.style.height = H + 'px';
+    ya.innerHTML = '<span class="y-tick">10</span><span class="y-tick">5</span><span class="y-tick">1</span>';
+
+    // SVG с fixed px — ни при каких условиях не растянется
+    const nonNull = values.filter(v => v !== null);
+    const n = labels.length;
+
+    let svgContent = '';
+
+    if (!nonNull.length) {
+      svgContent += `<text x="${W/2}" y="${H/2}" text-anchor="middle" font-size="9" fill="#2a2a2a">нет данных</text>`;
+    } else if (nonNull.length >= 2) {
+      // Точки с ненулевыми значениями
+      const pts = [];
+      values.forEach((v, i) => {
+        if (v === null) return;
+        const x = Math.round(i / (n-1) * W);
+        const y = Math.round(H - ((v-1)/9) * H);
+        pts.push([x, y]);
+      });
+
+      // Полилиния только по известным точкам
+      const polyline = pts.map(p => p.join(',')).join(' ');
+      svgContent += `<polyline points="${polyline}" fill="none" stroke="${color}" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>`;
+
+      // Точки
+      pts.forEach(([x,y]) => {
+        svgContent += `<circle cx="${x}" cy="${y}" r="2.5" fill="${color}"/>`;
+      });
+    }
+
+    // Метки оси X
+    labels.forEach((l, i) => {
+      const x = n === 1 ? W/2 : Math.round(i/(n-1)*W);
+      svgContent += `<text x="${x}" y="${H+13}" text-anchor="middle" font-size="8" fill="#2a2a2a">${l}</text>`;
+    });
+
+    const wrap = document.createElement('div');
+    wrap.className = 'chart-svg-wrap';
+    wrap.innerHTML = `<svg width="${W}" height="${H+14}" viewBox="0 0 ${W} ${H+14}">${svgContent}</svg>`;
+
+    area.appendChild(ya);
+    area.appendChild(wrap);
+    cell.appendChild(area);
+    grid.appendChild(cell);
+  });
+}
+
+function setPeriod(btn, period) {
+  document.querySelectorAll('.ptab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderCharts(period);
+}
+
+// ════════════════════════════════════════════════════════
+// ГЛАВНЫЙ ЭКРАН — КВАДРАТИКИ
+// ════════════════════════════════════════════════════════
+
+function renderDots() {
+  const diary = Storage.getDiary();
+
+  function makeCol(tags, containerId) {
+    const col = document.getElementById(containerId);
+    col.innerHTML = '';
+    tags.forEach(dir => {
+      const val    = Progress.forDir(diary, dir);
+      const filled = Progress.toDots(val);
+
+      const sk = document.createElement('div');
+      sk.className = 'sk' + (containerId === 'dots-right' ? ' sk-r' : '');
+
+      const lbl = document.createElement('label');
+      lbl.textContent = dir;
+      sk.appendChild(lbl);
+
+      const row = document.createElement('div');
+      row.className = 'dots';
+      for (let i = 0; i < 10; i++) {
+        const d = document.createElement('div');
+        d.className = 'dot' + (i < filled ? ' on' : '');
+        row.appendChild(d);
+      }
+      sk.appendChild(row);
+      col.appendChild(sk);
+    });
+  }
+
+  makeCol(TAGS_LEFT,  'dots-left');
+  makeCol(TAGS_RIGHT, 'dots-right');
+
+  // Дата последнего обновления
+  const diary2 = Storage.getDiary();
+  const sub = document.getElementById('main-updated');
+  if (diary2.length) {
+    const last = new Date(Math.max(...diary2.map(e => new Date(e.date))));
+    sub.textContent = 'обновлено ' + last.toLocaleDateString('ru-RU',{day:'numeric',month:'long'});
+  } else {
+    sub.textContent = 'нет данных';
+  }
+
+  // Баннер напоминания
+  const pill = document.getElementById('reminder-pill');
+  const today     = new Date().toISOString().slice(0,10);
+  const yesterday = new Date(Date.now()-86400000).toISOString().slice(0,10);
+  const hasToday     = diary2.some(e => e.date.slice(0,10) === today);
+  const hasYesterday = diary2.some(e => e.date.slice(0,10) === yesterday);
+  // Показываем если нет записи ни за сегодня, ни за вчера
+  pill.classList.toggle('visible', !hasToday && !hasYesterday);
+}
+
+// ════════════════════════════════════════════════════════
+// ЭКРАН ДНЕВНИКА
+// ════════════════════════════════════════════════════════
+
+let diaryEditId = null;
+let diaryDirScores = {}; // { 'НСОВ': 7, 'МНО': null (skipped), ... }
+
+function initDiaryDirs() {
+  ALL_DIRS.forEach(dir => {
+    diaryDirScores[dir] = null; // null = пропущено
+  });
+}
+
+function toggleAddDiary() {
+  const panel = document.getElementById('diary-add-panel');
+  panel.classList.toggle('open');
+  const btn = document.getElementById('diary-plus-btn');
+  btn.textContent = panel.classList.contains('open') ? '−' : '+';
+  if (panel.classList.contains('open')) {
+    diaryEditId = null;
+    initDiaryDirs();
+    renderDiaryForm();
+  }
+}
+
+function selectMood(el) {
+  document.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('sel'));
+  el.classList.add('sel');
+}
+
+function renderDiaryForm() {
+  // Дата — input с ограничением max=сегодня
+  const today = new Date().toISOString().slice(0,10);
+  const dateInput = document.getElementById('diary-form-date');
+  dateInput.max = today;
+  dateInput.value = today;
+  // Сброс заголовка и текста
+  document.getElementById('diary-title').value = '';
+  document.getElementById('diary-text').value = '';
+  // Сброс настроения
+  document.querySelectorAll('.mood-btn').forEach((b,i) => b.classList.toggle('sel', i===2));
+  // Рендер направлений
+  renderDiaryDirs();
+}
+
+function renderDiaryDirs() {
+  const container = document.getElementById('diary-dirs');
+  container.innerHTML = '';
+  ALL_DIRS.forEach(dir => {
+    const score = diaryDirScores[dir];
+    const skipped = score === null;
+
+    const row = document.createElement('div');
+    row.className = 'diary-dir-row';
+
+    const label = document.createElement('span');
+    label.className = 'diary-dir-label';
+    label.textContent = dir;
+    row.appendChild(label);
+
+    const dotsRow = document.createElement('div');
+    dotsRow.className = 'diary-dots-row';
+
+    for (let i = 1; i <= 10; i++) {
+      const dot = document.createElement('div');
+      dot.className = 'diary-dot' + (skipped ? ' empty-sel' : (score >= i ? ' sel' : ''));
+      dot.onclick = () => {
+        diaryDirScores[dir] = i;
+        renderDiaryDirs();
+      };
+      dotsRow.appendChild(dot);
+    }
+    row.appendChild(dotsRow);
+
+    const skipBtn = document.createElement('button');
+    skipBtn.className = 'diary-skip-btn' + (skipped ? ' skipped' : '');
+    skipBtn.textContent = skipped ? '—' : '—';
+    skipBtn.onclick = () => {
+      diaryDirScores[dir] = skipped ? 5 : null;
+      renderDiaryDirs();
+    };
+    row.appendChild(skipBtn);
+
+    container.appendChild(row);
+  });
+}
+
+function saveDiary() {
+  const mood  = document.querySelector('.mood-btn.sel')?.dataset.mood || '😐';
+  const title = document.getElementById('diary-title').value.trim();
+  const text  = document.getElementById('diary-text').value.trim();
+  const dateVal = document.getElementById('diary-form-date').value || new Date().toISOString().slice(0,10);
+  const entryDate = new Date(dateVal + 'T12:00:00').toISOString();
+
+  // dirs — только те, где есть оценка
+  const dirs = {};
+  ALL_DIRS.forEach(dir => {
+    const score = diaryDirScores[dir];
+    dirs[dir] = score !== null ? { score, skipped: false } : { skipped: true };
+  });
+
+  const hasAnyScore = ALL_DIRS.some(d => diaryDirScores[d] !== null);
+  if (!hasAnyScore && !text && !title) return;
+
+  let diary = Storage.getDiary();
+  if (diaryEditId) {
+    diary = diary.map(e => e.id === diaryEditId
+      ? { ...e, mood, title, text, dirs }
+      : e);
+    diaryEditId = null;
+  } else {
+    diary.unshift({ id: Date.now(), date: entryDate, mood, title, text, dirs });
+  }
+  Storage.saveDiary(diary);
+
+  // Закрыть форму
+  const panel = document.getElementById('diary-add-panel');
+  panel.classList.remove('open');
+  document.getElementById('diary-plus-btn').textContent = '+';
+
+  renderDiaryFeed();
+  renderDots();
+  renderCharts(currentPeriod);
+}
+
+function renderDiaryFeed() {
+  const feed  = document.getElementById('diary-feed');
+  const diary = Storage.getDiary();
+  feed.innerHTML = '';
+  if (!diary.length) { feed.innerHTML = '<div class="feed-empty">Нет записей</div>'; return; }
+
+  diary.forEach(entry => {
+    const card = document.createElement('div');
+    card.className = 'diary-card';
+
+    const d = new Date(entry.date);
+    const dateStr = d.toLocaleDateString('ru-RU', {weekday:'short', day:'numeric', month:'short'});
+
+    // Header: дата + настроение
+    const header = document.createElement('div');
+    header.className = 'diary-card-header';
+    header.innerHTML = `<span class="diary-card-date">${dateStr}</span><span class="diary-card-mood">${entry.mood || '😐'}</span>`;
+    card.appendChild(header);
+
+    // Заголовок
+    if (entry.title) {
+      const titleEl = document.createElement('div');
+      titleEl.className = 'diary-card-title';
+      titleEl.textContent = entry.title;
+      card.appendChild(titleEl);
+    }
+
+    // Направления с оценками
+    const activeDirs = ALL_DIRS.filter(dir => entry.dirs && entry.dirs[dir] && !entry.dirs[dir].skipped);
+    if (activeDirs.length) {
+      const dirsEl = document.createElement('div');
+      dirsEl.className = 'diary-card-dirs';
+      activeDirs.forEach(dir => {
+        const score = entry.dirs[dir].score;
+        const pill = document.createElement('span');
+        pill.className = 'diary-card-dir';
+        pill.innerHTML = `${escapeHtml(dir)} <span class="diary-card-dir-score">${score}</span>`;
+        dirsEl.appendChild(pill);
+      });
+      card.appendChild(dirsEl);
+    }
+
+    // Текст
+    if (entry.text) {
+      const textEl = document.createElement('div');
+      textEl.className = 'diary-card-text';
+      textEl.textContent = entry.text;
+      card.appendChild(textEl);
+    }
+
+    // Действия
+    const actions = document.createElement('div');
+    actions.className = 'diary-card-actions';
+    actions.style.cssText = 'display:flex;align-items:center;gap:8px;margin-top:4px';
+    actions.innerHTML = `
+      <i class="ti ti-pencil" style="color:#333;cursor:pointer;font-size:16px;padding:2px 4px" onclick="editDiaryEntry(${entry.id})"></i>
+      <span style="color:#333;cursor:pointer;font-size:14px;padding:2px 4px" onclick="deleteDiaryEntry(${entry.id})">✕</span>`;
+    card.appendChild(actions);
+
+    feed.appendChild(card);
+  });
+}
+
+function deleteDiaryEntry(id) {
+  const diary = Storage.getDiary().filter(e => e.id !== id);
+  Storage.saveDiary(diary);
+  renderDiaryFeed();
+  renderDots();
+}
+
+function editDiaryEntry(id) {
+  const entry = Storage.getDiary().find(e => e.id === id);
+  if (!entry) return;
+  diaryEditId = id;
+
+  // Восстанавливаем оценки
+  ALL_DIRS.forEach(dir => {
+    const d = entry.dirs && entry.dirs[dir];
+    diaryDirScores[dir] = (d && !d.skipped) ? d.score : null;
+  });
+
+  const panel = document.getElementById('diary-add-panel');
+  panel.classList.add('open');
+  document.getElementById('diary-plus-btn').textContent = '−';
+
+  const today = new Date().toISOString().slice(0,10);
+  const dateInput = document.getElementById('diary-form-date');
+  dateInput.max = today;
+  dateInput.value = new Date(entry.date).toISOString().slice(0,10);
+  document.getElementById('diary-title').value = entry.title || '';
+  document.getElementById('diary-text').value  = entry.text  || '';
+
+  document.querySelectorAll('.mood-btn').forEach(b => {
+    b.classList.toggle('sel', b.dataset.mood === (entry.mood || '😐'));
+  });
+
+  renderDiaryDirs();
+}
+
+// ════════════════════════════════════════════════════════
+// ЭКРАН ЗАМЕТКИ / СОБЫТИЯ / ЗНАНИЯ
+// ════════════════════════════════════════════════════════
+
+// — Заметки —
+
+function toggleAddNote() {
+  const panel = document.getElementById('note-add-panel');
+  panel.classList.toggle('open');
+  if (panel.classList.contains('open')) document.getElementById('note-input').focus();
+}
+
+function saveNote() {
+  const text = document.getElementById('note-input').value.trim();
+  if (!text) return;
+  const tags = [...document.querySelectorAll('.note-tag-btn.sel')].map(el => el.dataset.tag);
+  let notes = Storage.getNotes();
+  if (pendingNoteEditId !== null) {
+    notes = notes.map(n => n.id === pendingNoteEditId ? { ...n, text, tags } : n);
+    pendingNoteEditId = null;
+  } else {
+    notes.unshift({ id: Date.now(), date: new Date().toISOString(), text, tags });
+  }
+  Storage.saveNotes(notes);
+  document.getElementById('note-input').value = '';
+  document.querySelectorAll('.note-tag-btn').forEach(el => el.classList.remove('sel'));
+  document.getElementById('note-add-panel').classList.remove('open');
+  renderNotes();
+}
+
+let noteFilterTag = null;
+
+function toggleNoteTag(el) {
+  el.classList.toggle('sel');
+}
+
+function renderNoteFilters(notes) {
+  const wrap = document.getElementById('note-filter-wrap');
+  if (!wrap) return;
+  const tags = [...new Set(notes.flatMap(n => n.tags || []))].sort();
+  wrap.innerHTML = '';
+  if (!tags.length) return;
+  const all = document.createElement('span');
+  all.className = 'ev-filter-tag' + (!noteFilterTag ? ' active' : '');
+  all.textContent = 'Все';
+  all.onclick = () => { noteFilterTag = null; renderNotes(); };
+  wrap.appendChild(all);
+  tags.forEach(t => {
+    const s = document.createElement('span');
+    s.className = 'ev-filter-tag' + (noteFilterTag === t ? ' active' : '');
+    s.textContent = t;
+    s.onclick = () => { noteFilterTag = t; renderNotes(); };
+    wrap.appendChild(s);
+  });
+}
+
+function renderNotes() {
+  const feed  = document.getElementById('notes-feed');
+  const allNotes = Storage.getNotes();
+  renderNoteFilters(allNotes);
+  const notes = noteFilterTag ? allNotes.filter(n => (n.tags||[]).includes(noteFilterTag)) : allNotes;
+  feed.innerHTML = '';
+  if (!notes.length) { feed.innerHTML = '<div class="feed-empty">Нет заметок</div>'; return; }
+  notes.forEach(n => {
+    const card = document.createElement('div');
+    card.className = 'note-card';
+    const d = new Date(n.date);
+    const tagsHtml = (n.tags||[]).map(t => {
+      const st = NOTE_TAG_STYLE[t] || {bg:'#222',color:'#555'};
+      return `<span class="ev-card-tag" style="background:${st.bg};color:${st.color}">${escapeHtml(t)}</span>`;
+    }).join('');
+    card.innerHTML = `
+      <div class="note-card-date" style="display:flex;justify-content:space-between;align-items:center">
+        <span>${d.toLocaleDateString('ru-RU',{day:'numeric',month:'long'})}, ${d.toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'})}</span>
+        <span style="display:flex;align-items:center;gap:8px">
+          <i class="ti ti-copy" style="color:#333;cursor:pointer;font-size:16px;padding:2px 4px" onclick="copyNote(${n.id}, this)"></i>
+          <i class="ti ti-pencil" style="color:#333;cursor:pointer;font-size:16px;padding:2px 4px" onclick="editNote(${n.id})"></i>
+          <span style="color:#333;cursor:pointer;font-size:14px;padding:2px 4px" onclick="deleteNote(${n.id})">✕</span>
+        </span>
+      </div>
+      ${tagsHtml ? `<div style="display:flex;flex-wrap:wrap;gap:3px;margin-bottom:4px">${tagsHtml}</div>` : ''}
+      <div class="note-card-text">${escapeHtml(n.text)}</div>`;
+    feed.appendChild(card);
+  });
+}
+
+function deleteNote(id) {
+  const notes = Storage.getNotes().filter(n => n.id !== id);
+  Storage.saveNotes(notes);
+  renderNotes();
+}
+
+let pendingNoteEditId = null;
+
+function editNote(id) {
+  const note = Storage.getNotes().find(n => n.id === id);
+  if (!note) return;
+  pendingNoteEditId = id;
+  const panel = document.getElementById('note-add-panel');
+  panel.classList.add('open');
+  document.getElementById('note-input').value = note.text;
+  document.getElementById('note-input').focus();
+  document.querySelectorAll('.note-tag-btn').forEach(el => {
+    el.classList.toggle('sel', (note.tags||[]).includes(el.dataset.tag));
+  });
+}
+
+function copyNote(id, el) {
+  const note = Storage.getNotes().find(n => n.id === id);
+  if (!note) return;
+  const ok = () => {
+    el.classList.remove('ti-copy'); el.classList.add('ti-check'); el.style.color = '#4ade80';
+    setTimeout(() => { el.classList.remove('ti-check'); el.classList.add('ti-copy'); el.style.color = '#333'; }, 1500);
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(note.text).then(ok).catch(() => fallback(note.text, ok));
+  } else { fallback(note.text, ok); }
+}
+
+// — Добавить знание —
+
+function toggleAddKnowledge() {
+  const panel = document.getElementById('knowledge-add-panel');
+  panel.classList.toggle('open');
+  const btn = document.getElementById('bk-plus-btn');
+  btn.textContent = panel.classList.contains('open') ? '−' : '+';
+}
+
+function addKnowledge() {
+  const title = document.getElementById('zn-title').value.trim();
+  if (!title) return;
+  const type     = document.getElementById('zn-type').value;
+  const category = document.getElementById('zn-cat').value;
+  let items = Storage.getUserKnowledge();
+  if (pendingKnowledgeEditId !== null) {
+    items = items.map(i => i.id === pendingKnowledgeEditId ? {
+      ...i, type, category, title,
+      short:  document.getElementById('zn-short').value.trim(),
+      detail: document.getElementById('zn-detail').value.trim()
+    } : i);
+    pendingKnowledgeEditId = null;
+  } else {
+    items.push({
+      id: Date.now(), type, category, title,
+      short:  document.getElementById('zn-short').value.trim(),
+      detail: document.getElementById('zn-detail').value.trim()
+    });
+  }
+  Storage.saveUserKnowledge(items);
+  ['zn-title','zn-short','zn-detail'].forEach(id => { document.getElementById(id).value = ''; });
+  document.getElementById('zn-type').value = 'концепция';
+  document.getElementById('zn-cat').value = '';
+  const panel = document.getElementById('knowledge-add-panel');
+  panel.classList.remove('open');
+  document.getElementById('bk-plus-btn').textContent = '+';
+  renderKnowledgeBase();
+}
+
+// ════════════════════════════════════════════════════════
+// БАЗА ЗНАНИЙ
+// ════════════════════════════════════════════════════════
+
+const DEFAULT_KNOWLEDGE = [
+  { id:1, category:'инструмент', title:'Мембрана',
+    short:'Реактивный фильтр от РВС. Якорь: «блок».',
+    detail:'Фиолетовое пульсирующее силовое поле вокруг тела. Ставится в момент когда замечаешь РВС — реактивный, не фоновый. Фоновая мембрана глушит эмпатию. Два касания большим пальцем по дистальной фаланге среднего пальца — активация жестом.' },
+  { id:2, category:'инструмент', title:'Core',
+    short:'Символ безусловной ценности в груди.',
+    detail:'Жёлтый топаз в груди. Ценность не нужно заслуживать — она есть по умолчанию. Жест: прижатие большого пальца к основанию среднего, пространство образует форму топаза. Работает вместе с мембраной как единый жест.' },
+  { id:3, category:'метод', title:'НСОВ',
+    short:'Наблюдение → Суждение → Оценка → Вывод.',
+    detail:'Ключевое — задерживаться на переходе от наблюдения к суждению. Суждение это уже интерпретация, не факт. Фальсификация гипотез (Поппер): искать опровержение, а не подтверждение. Суждение должно быть фальсифицируемым.' },
+  { id:4, category:'концепция', title:'РВС',
+    short:'Режим внешнего самонаблюдателя.',
+    detail:'Буквальный выход из тела — взгляд на себя глазами воображаемого наблюдателя с тревогой и враждебностью. Отличие от здорового самоанализа: наблюдающее эго смотрит с любопытством изнутри, РВС — с тревогой снаружи.' },
+  { id:5, category:'концепция', title:'Negativity bias',
+    short:'Негативное весит втрое тяжелее позитивного.',
+    detail:'Мозг эволюционно заточен замечать угрозы острее чем благополучие. Следствие: ощущение «тёмного больше» — не факт, а погрешность измерительного инструмента. Применимо к самооценке: оценка сразу после стресса систематически занижена.' },
+  { id:6, category:'концепция', title:'Условная ценность',
+    short:'Базовое ощущение что ценность нужно заслужить.',
+    detail:'Фоновое ощущение себя как «статиста пока не доказано обратное». Чужая оценка воспринимается как более объективная чем собственная. Инструмент противодействия: Core + сбор контрдоказательств из реального опыта.' },
+  { id:7, category:'концепция', title:'Мастерство неформального общения',
+    short:'Три кита: присутствие, интерес, лёгкость.',
+    detail:'Присутствие — полное внимание к человеку здесь и сейчас. Интерес — искреннее любопытство к его опыту. Лёгкость — отсутствие тревоги об оценке. Инструменты: лопата (развить тему), мост (плавно переключить), вопрос «жду или даю?».' },
+  { id:8, category:'концепция', title:'Эффект Йеркса-Додсона',
+    short:'Умеренный стресс повышает эффективность.',
+    detail:'Слишком мало стресса — скука и безразличие. Оптимальный уровень — пик эффективности. Хронический стресс — деградация и выгорание. Практический вывод: небольшая тревога перед важной ситуацией — союзник, а не враг.' },
+];
+
+let bkFilterCat = null;
+
+// ── Встроенные типы знаний (одно определение на весь модуль) ──────────────
+const KNOWLEDGE_TYPES = ['инструмент', 'метод', 'концепция', 'схема', 'другое'];
+
+// Определяет type и category из элемента знания.
+// Нужно потому что старые знания хранили тип в поле category,
+// а новые хранят отдельно: type (из KNOWLEDGE_TYPES) и category (пользовательская).
+function resolveItem(item) {
+  const type     = item.type || (KNOWLEDGE_TYPES.includes(item.category) ? item.category : 'концепция');
+  const category = item.category && !KNOWLEDGE_TYPES.includes(item.category) ? item.category : '';
+  return { type, category };
+}
+
+function renderKnowledgeFilters(items) {
+  const wrap = document.getElementById('bk-filter-wrap');
+  if (!wrap) return;
+  const cats = [...new Set(items
+    .map(i => resolveItem(i).category)
+    .filter(Boolean))].sort();
+  wrap.innerHTML = '';
+  if (!cats.length) return;
+  const all = document.createElement('span');
+  all.className = 'ev-filter-tag' + (!bkFilterCat ? ' active' : '');
+  all.textContent = 'Все';
+  all.onclick = () => { bkFilterCat = null; renderKnowledgeBase(); };
+  wrap.appendChild(all);
+  cats.forEach(c => {
+    const s = document.createElement('span');
+    s.className = 'ev-filter-tag' + (bkFilterCat === c ? ' active' : '');
+    const st = getCatStyle(c);
+    if (bkFilterCat === c) { s.style.background = st.bg; s.style.color = st.color; s.style.borderColor = 'transparent'; }
+    s.textContent = c;
+    s.onclick = () => { bkFilterCat = c; renderKnowledgeBase(); };
+
+    // Долгое нажатие → редактирование категории
+    let pressTimer = null;
+    s.addEventListener('touchstart', () => {
+      pressTimer = setTimeout(() => { if (navigator.vibrate) navigator.vibrate(40); openCatModal(c); }, 600);
+    }, { passive: true });
+    s.addEventListener('touchend',  () => clearTimeout(pressTimer), { passive: true });
+    s.addEventListener('touchmove', () => clearTimeout(pressTimer), { passive: true });
+
+    wrap.appendChild(s);
+  });
+}
+
+function migrateDefaultKnowledge() {
+  // Выполняется один раз: переносим DEFAULT_KNOWLEDGE в localStorage
+  if (localStorage.getItem('tracker_knowledge_migrated')) return;
+  const existing = Storage.getUserKnowledge();
+  const existingIds = new Set(existing.map(i => i.id));
+  const deletedDefault = JSON.parse(localStorage.getItem('tracker_deleted_default') || '[]');
+  const toAdd = DEFAULT_KNOWLEDGE
+    .filter(d => !existingIds.has(d.id) && !deletedDefault.includes(d.id))
+    .map(d => {
+      const { type, category } = resolveItem(d);
+      return { ...d, type, category };
+    });
+  Storage.saveUserKnowledge([...toAdd, ...existing]);
+  localStorage.setItem('tracker_knowledge_migrated', '1');
+}
+
+function renderKnowledgeBase() {
+  const list = document.getElementById('bk-list');
+  list.innerHTML = '';
+
+  // Теперь единственный источник — localStorage
+  const allItems = Storage.getUserKnowledge();
+  renderKnowledgeFilters(allItems);
+
+  const filtered = bkFilterCat
+    ? allItems.filter(i => resolveItem(i).category === bkFilterCat)
+    : allItems;
+
+  filtered.forEach((item, index) => {
+    const { type, category } = resolveItem(item);
+    const typeSt = getCatStyle(type);
+    const catSt  = category ? getCatStyle(category) : typeSt;
+    const card = document.createElement('div');
+    card.className = 'bk-card';
+    card.dataset.id = item.id;
+    card.innerHTML = `
+      <div class="bk-head">
+        <div class="bk-left">
+          ${category
+            ? `<span class="bk-badge" style="background:${catSt.bg};color:${catSt.color}">${escapeHtml(category)}</span>`
+            : ''}
+          <div class="bk-title">${escapeHtml(item.title)}</div>
+          ${item.short ? `<div class="bk-short">${escapeHtml(item.short)}</div>` : ''}
+        </div>
+        <i class="ti ti-chevron-down bk-arr" aria-hidden="true"></i>
+      </div>
+      ${item.detail ? `<div class="bk-body">${item.detail.trimStart().startsWith('<svg') ? item.detail : escapeHtml(item.detail)}</div>` : ''}
+      <div class="bk-card-bottom">
+        <span class="bk-type-pill">${escapeHtml(type)}</span>
+        <span style="margin-left:auto;display:flex;align-items:center;gap:8px">
+          <i class="ti ti-copy" style="color:#333;cursor:pointer;font-size:16px;padding:2px 4px" onclick="event.stopPropagation();copyKnowledge(${item.id}, this)"></i>
+          <i class="ti ti-pencil" style="color:#333;cursor:pointer;font-size:16px;padding:2px 4px" onclick="event.stopPropagation();editKnowledge(${item.id})"></i>
+          <span style="color:#333;cursor:pointer;font-size:14px;padding:2px 4px" onclick="event.stopPropagation();deleteKnowledge(${item.id})">✕</span>
+        </span>
+      </div>
+    `;
+    card.addEventListener('click', () => card.classList.toggle('open'));
+    initCardDrag(card, item.id);
+    list.appendChild(card);
+  });
+}
+
+// ════════════════════════════════════════════════════════
+// DRAG & DROP ДЛЯ ЗНАНИЙ (touch-based)
+// ════════════════════════════════════════════════════════
+
+let dragState = null; // { id, ghost, origCard, startY, scrollEl }
+
+function initCardDrag(card, id) {
+  let pressTimer = null;
+  let startTouch = null;
+
+  card.addEventListener('touchstart', e => {
+    startTouch = e.touches[0];
+    pressTimer = setTimeout(() => {
+      // Отменяем стандартное поведение Safari (выделение текста, контекстное меню)
+      document.getSelection()?.removeAllRanges();
+      startDrag(startTouch, card, id);
+    }, 400);
+  }, { passive: true });
+
+  card.addEventListener('touchend',  () => clearTimeout(pressTimer), { passive: true });
+  card.addEventListener('touchmove', () => clearTimeout(pressTimer), { passive: true });
+}
+
+function startDrag(touch, card, id) {
+  // Вибрация как фидбек
+  if (navigator.vibrate) navigator.vibrate(40);
+
+  const rect = card.getBoundingClientRect();
+
+  // Создаём призрак — визуальную копию карточки
+  const ghost = card.cloneNode(true);
+  ghost.className = 'drag-ghost bk-card';
+  ghost.style.width  = rect.width + 'px';
+  ghost.style.left   = rect.left + 'px';
+  ghost.style.top    = rect.top + 'px';
+  document.body.appendChild(ghost);
+
+  card.classList.add('dragging');
+
+  const scrollEl = document.getElementById('bk-list');
+
+  dragState = {
+    id,
+    ghost,
+    origCard: card,
+    offsetY: touch.clientY - rect.top,
+    scrollEl
+  };
+
+  document.addEventListener('touchmove', onDragMove, { passive: false });
+  document.addEventListener('touchend',  onDragEnd,  { passive: true });
+}
+
+function onDragMove(e) {
+  if (!dragState) return;
+  e.preventDefault();
+  const touch = e.touches[0];
+  const { ghost, offsetY } = dragState;
+
+  // Двигаем призрак
+  ghost.style.top = (touch.clientY - offsetY) + 'px';
+
+  // Авто-скролл при приближении к краям
+  const list = dragState.scrollEl;
+  const listRect = list.getBoundingClientRect();
+  const margin = 60;
+  if (touch.clientY < listRect.top + margin)    list.scrollTop -= 6;
+  if (touch.clientY > listRect.bottom - margin) list.scrollTop += 6;
+
+  // Подсвечиваем карточку под пальцем
+  document.querySelectorAll('.bk-card.drag-over').forEach(c => c.classList.remove('drag-over'));
+  const cards = [...document.querySelectorAll('#bk-list .bk-card:not(.dragging)')];
+  const target = cards.find(c => {
+    const r = c.getBoundingClientRect();
+    return touch.clientY >= r.top && touch.clientY <= r.bottom;
+  });
+  if (target) target.classList.add('drag-over');
+}
+
+function onDragEnd(e) {
+  if (!dragState) return;
+  const touch = e.changedTouches[0];
+  const { ghost, origCard, id, scrollEl } = dragState;
+
+  // Убираем визуальные эффекты
+  ghost.remove();
+  origCard.classList.remove('dragging');
+  document.querySelectorAll('.bk-card.drag-over').forEach(c => c.classList.remove('drag-over'));
+
+  // Находим целевую карточку
+  const cards = [...document.querySelectorAll('#bk-list .bk-card:not(.dragging)')];
+  const target = cards.find(c => {
+    const r = c.getBoundingClientRect();
+    return touch.clientY >= r.top && touch.clientY <= r.bottom;
+  });
+
+  if (target && target.dataset.id !== String(id)) {
+    // Переставляем в массиве
+    const items = Storage.getUserKnowledge();
+    const fromIdx = items.findIndex(i => i.id === id);
+    const toIdx   = items.findIndex(i => i.id === Number(target.dataset.id));
+    if (fromIdx !== -1 && toIdx !== -1) {
+      const [moved] = items.splice(fromIdx, 1);
+      items.splice(toIdx, 0, moved);
+      Storage.saveUserKnowledge(items);
+      renderKnowledgeBase();
+    }
+  }
+
+  document.removeEventListener('touchmove', onDragMove);
+  document.removeEventListener('touchend',  onDragEnd);
+  dragState = null;
+}
+
+function deleteKnowledge(id) {
+  const items = Storage.getUserKnowledge().filter(i => i.id !== id);
+  Storage.saveUserKnowledge(items);
+  renderKnowledgeBase();
+}
+
+let pendingKnowledgeEditId = null;
+
+function editKnowledge(id) {
+  const item = Storage.getUserKnowledge().find(i => i.id === id);
+  if (!item) return;
+  pendingKnowledgeEditId = id;
+  const { type, category } = resolveItem(item);
+  document.getElementById('zn-type').value   = type;
+  document.getElementById('zn-cat').value    = category;
+  document.getElementById('zn-title').value  = item.title  || '';
+  document.getElementById('zn-short').value  = item.short  || '';
+  document.getElementById('zn-detail').value = item.detail || '';
+  const panel = document.getElementById('knowledge-add-panel');
+  panel.classList.add('open');
+  document.getElementById('bk-plus-btn').textContent = '−';
+}
+
+function copyKnowledge(id, el) {
+  const item = Storage.getUserKnowledge().find(i => i.id === id) ||
+               DEFAULT_KNOWLEDGE.find(i => i.id === id);
+  if (!item) return;
+  const text = item.detail || item.short || item.title;
+  const ok = () => {
+    el.classList.remove('ti-copy'); el.classList.add('ti-check'); el.style.color = '#4ade80';
+    setTimeout(() => { el.classList.remove('ti-check'); el.classList.add('ti-copy'); el.style.color = '#333'; }, 1500);
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(ok).catch(() => fallback(text, ok));
+  } else { fallback(text, ok); }
+}
+
+// ════════════════════════════════════════════════════════
+// НАВИГАЦИЯ
+// ════════════════════════════════════════════════════════
+
+function showScreen(id, btn) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nb').forEach(b => b.classList.remove('active'));
+  document.getElementById('screen-' + id).classList.add('active');
+  btn.classList.add('active');
+
+  // Обновить данные при переключении
+  if (id === 'main')   renderDots();
+  if (id === 'dyn')    renderCharts(currentPeriod);
+  if (id === 'bk')     renderKnowledgeBase();
+  if (id === 'notes')  renderNotes();
+  if (id === 'log')    renderDiaryFeed();
+}
+
+// ════════════════════════════════════════════════════════
+// ЭКСПОРТ ДАННЫХ
+// ════════════════════════════════════════════════════════
+
+function exportData() {
+  const data = {
+    exportDate: new Date().toISOString(),
+    version: 2,
+    diary:     Storage.getDiary(),
+    events:    Storage.getEvents(), // legacy
+    notes:     Storage.getNotes(),
+    knowledge: Storage.getUserKnowledge()
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = 'progress-backup-' + new Date().toISOString().slice(0,10) + '.json';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ════════════════════════════════════════════════════════
+// УТИЛИТЫ
+// ════════════════════════════════════════════════════════
+
+function escapeHtml(s) {
+  if (!s) return '';
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ════════════════════════════════════════════════════════
+// ИНИЦИАЛИЗАЦИЯ
+// ════════════════════════════════════════════════════════
+
+document.addEventListener('DOMContentLoaded', () => {
+  migrateDefaultKnowledge();
+  initDiaryDirs();
+  renderDots();
+  renderKnowledgeBase();
+  renderCharts('week');
+  renderNotes();
+  renderDiaryFeed();
+  updateCatSelect();
+});
+</script>
+</body>
+</html>
